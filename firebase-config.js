@@ -1,13 +1,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
 import dotenv from "dotenv";
 import { getFirestore } from "firebase/firestore";
 
 dotenv.config();
-
-
-
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -22,17 +19,26 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Set persistence immediately
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Firebase persistence initialized");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
 
 // Test if Firebase is connected properly
 try {
   console.log("Initializing Firebase...");
   console.log("Firebase config:", firebaseConfig);
-  const auth = getAuth(app);
   console.log(auth)
 } catch (error) {
   console.error("Error initializing Firebase:", error);
   console.log("Firebase config:", firebaseConfig);
 }
 
-export { app, db };
+export { app, auth, db };
