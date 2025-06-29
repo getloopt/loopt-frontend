@@ -11,6 +11,7 @@ export interface UserData {
   section?: string;
   semester?: string;
   CanUploadEdit?: boolean;
+  hasVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -54,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           section: data.section,
           semester: data.semester,
           CanUploadEdit: data.CanUploadEdit,
+          hasVerified: data.hasVerified,
         };
       }
       return null;

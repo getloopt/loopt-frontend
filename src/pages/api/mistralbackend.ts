@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import  {adminDB}  from '@/lib/firebaseAdmin';
+import { adminDB } from '@/lib/firebaseAdmin';
 import sampleTable from '../../../data/sampletable';
+import type { Firestore } from 'firebase-admin/firestore';
 
 // This is the main handler for your API route.
 // It will be executed every time a request is made to /api/mistralbackend
@@ -19,12 +20,19 @@ export default async function handler(
   try {
     // Log the request body
     console.log('Request body:', req.body);
-    const { imageUrl, email } = req.body;
+    const { imageUrl, email, department, year, section, semester } = req.body;
 
-    if (!imageUrl || !email) {
+    if (!imageUrl || !email || !department || !year || !section || !semester) {
       return res.status(400).json({ 
         message: 'Missing required fields',
-        received: { imageUrl: !!imageUrl, email: !!email }
+        received: { 
+            imageUrl: !!imageUrl, 
+            email: !!email,
+            department: !!department,
+            year: !!year,
+            section: !!section,
+            semester: !!semester,
+        }
       });
     }
 
@@ -33,22 +41,35 @@ export default async function handler(
       throw new Error('Firebase Admin DB not initialized');
     }
 
+    const typedAdminDB: Firestore = adminDB;
+
     const timetableData = {
-      ...sampleTable,
+      day: sampleTable.day,
+      PeriodandTimings: sampleTable.PeriodandTimings,
+      'course-code': sampleTable['course-code'],
+      classRoom: sampleTable.classRoom,
       email: email,
       imageUrl: imageUrl,
-      createdAt: new Date().toISOString()
+      department_uploaded: department,
+      year_uploaded: year,
+      section_uploaded: section,
+      semester_uploaded: semester,
+      createdAt: new Date().toISOString(),
+      hasVerified: false
     };
 
     try {
-      // First try to get the existing document
-      const snap = await adminDB
+      // First try to get the existing document using class details
+      const snap = await typedAdminDB
         .collection('TimeTable')
-        .where('email', '==', email)
+        .where('department_uploaded', '==', department)
+        .where('year_uploaded', '==', year)
+        .where('section_uploaded', '==', section)
+        .where('semester_uploaded', '==', semester)
         .get();
 
       if (snap.empty) {
-        const docRef = await adminDB.collection('TimeTable').add(timetableData);
+        const docRef = await typedAdminDB.collection('TimeTable').add(timetableData);
         console.log('Created new document:', docRef.id);
         return res.status(200).json({ 
           success: true,

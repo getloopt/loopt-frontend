@@ -21,7 +21,7 @@ const serviceAccount={
     universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
 }
 
-let adminDB;
+let adminDB: admin.firestore.Firestore;
 
 console.log(serviceAccount);
 

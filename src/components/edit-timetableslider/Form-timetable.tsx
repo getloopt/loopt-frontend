@@ -62,15 +62,21 @@ const FormTimetable = () => {
 
     // Add this state to track all courses
     const [sampleCourses, setSampleCourses] = useState<Course[]>([]);
-    const { user } = useAuth();
+    const { user, userData } = useAuth();
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !userData) return;
 
         const fetchCourses = async () => {
             try {
                 const timetableCollectionRef = collection(db, 'TimeTable');
-                const q = query(timetableCollectionRef, where('email', '==', user.email));
+                const q = query(
+                    timetableCollectionRef,
+                    where('department_uploaded', '==', userData.department),
+                    where('year_uploaded', '==', userData.year),
+                    where('section_uploaded', '==', userData.section),
+                    where('semester_uploaded', '==', userData.semester)
+                );
                 const querySnapshot = await getDocs(q);
     
                 if(!querySnapshot.empty) {
@@ -93,7 +99,7 @@ const FormTimetable = () => {
         };
 
         fetchCourses();
-    }, [user]);
+    }, [user, userData]);
 
     useEffect(() => {
         if (!api) {
@@ -192,13 +198,27 @@ const FormTimetable = () => {
 
     /* ---------------------- 🔄 Firestore helpers ---------------------- */
     const getTimetableDocRef = async () => {
-        if (!user?.email) throw new Error('User not authenticated');
+        if (!user?.email || !userData) throw new Error('User not authenticated or user data missing');
         const timetableCol = collection(db, 'TimeTable');
-        const q = query(timetableCol, where('email', '==', user.email));
+        const q = query(
+            timetableCol,
+            where('department', '==', userData.department),
+            where('year', '==', userData.year),
+            where('section', '==', userData.section),
+            where('semester', '==', userData.semester)
+        );
         const snap = await getDocs(q);
         if (!snap.empty) return snap.docs[0].ref;
+        
         const newRef = doc(timetableCol);
-        await setDoc(newRef, { email: user.email, 'course-code': [] });
+        await setDoc(newRef, { 
+            email: user.email, 
+            department: userData.department,
+            year: userData.year,
+            section: userData.section,
+            semester: userData.semester,
+            'course-code': [] 
+        });
         return newRef;
     };
 

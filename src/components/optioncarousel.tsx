@@ -73,6 +73,15 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
         await updateDoc(userDocRef, {
           hasVerified: true
         });
+        const timetableCollection = collection(db, "TimeTable");
+        const timetableQuery = query(timetableCollection, where("email", "==", userData.email));
+        const timetableSnapshot = await getDocs(timetableQuery);
+        if (!timetableSnapshot.empty) {
+          const timetableDocRef = timetableSnapshot.docs[0].ref;
+          await updateDoc(timetableDocRef, {
+            hasVerified: true
+          });
+        }
         toast.success("Timetable published successfully!", {
             description: "All students can now view the updated timetable.",
         });

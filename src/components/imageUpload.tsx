@@ -38,7 +38,7 @@ export function ImageUploadDemo() {
 
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-  const { user, logout } = useAuth()
+  const { user, logout, userData } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [publicImageUrl, setPublicImageUrl] = useState<string | null>(null);
   const router = useRouter();
@@ -48,13 +48,13 @@ export function ImageUploadDemo() {
     e.stopPropagation()
   }
 
-  const handleMistralBackend = async (publicUrl: string, email: string | null | undefined) => {
+  const handleMistralBackend = async (publicUrl: string, email: string | null | undefined, details: typeof userData) => {
     if (!publicUrl) {
       toast.error("Error: No image URL to process.");
       return;
     }
-    if (!email) {
-        toast.error("Error: User not logged in.");
+    if (!email || !details) {
+        toast.error("Error: User not logged in or user details are missing.");
         return;
     }
     try {
@@ -63,7 +63,14 @@ export function ImageUploadDemo() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ imageUrl: publicUrl, email: email }),
+        body: JSON.stringify({ 
+          imageUrl: publicUrl, 
+          email: email,
+          department: details.department,
+          year: details.year,
+          section: details.section,
+          semester: details.semester,
+        }),
       });
 
       if (!response.ok) {
@@ -234,7 +241,7 @@ export function ImageUploadDemo() {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row-reverse sm:gap-30 gap-5">
             <AlertDialogAction>
-                  <GradientButton variant="variant" className="!w-full mt-5" onClick={() => handleMistralBackend(publicImageUrl || "", user?.email || "")}>
+                  <GradientButton variant="variant" className="!w-full mt-5" onClick={() => handleMistralBackend(publicImageUrl || "", user?.email || "", userData)}>
             
                 Yes
                 <WandSparkles className="w-4 h-4 ml-2" />

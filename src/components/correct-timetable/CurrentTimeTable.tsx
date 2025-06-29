@@ -3,7 +3,7 @@ import { Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Progress } from "@/components/ui/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../firebase-config';
 import { useAuth, UserData } from '@/contexts/AuthContext';
 
@@ -38,6 +38,7 @@ interface TimeTableDoc {
   PeriodandTimings: { period: string, timing: string }[];
   classRoom: string;
   email: string;
+  hasVerified?: boolean;
 }
 
 // --- Helper function to parse time ---
@@ -70,7 +71,7 @@ const parseTime = (timeStr: string): Date => {
       hours += 12;
     }
 
-    today.setHours(hours, minutes, 0, 0);
+  today.setHours(hours, minutes, 0, 0);
     return today;
   }
 
@@ -126,60 +127,45 @@ const CurrentTimeTable = () => {
       return;
     }
 
-    const fetchTimetableAndStatus = async () => {
-      setLoading(true);
-      try {
-        // Find the admin for the user's section
-        const usersCollection = collection(db, "users");
-        const adminQuery = query(usersCollection, 
-          where("department", "==", userData.department),
-          where("year", "==", userData.year),
-          where("section", "==", userData.section),
-          where("CanUploadEdit", "==", true)
-        );
-        const adminSnapshot = await getDocs(adminQuery);
-
-        if (adminSnapshot.empty) {
-          // No admin found for this section
-          setTimetableVisibility(false);
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'TimeTable'),
+        where('department_uploaded', '==', userData.department),
+        where('year_uploaded', '==', userData.year),
+        where('section_uploaded', '==', userData.section),
+        where('semester_uploaded', '==', userData.semester)
+      ),
+      (snapshot) => {
+        if (snapshot.empty) {
           setTimetableData(null);
+          setTimetableVisibility(false);
           setLoading(false);
           return;
         }
 
-        const adminDoc = adminSnapshot.docs[0];
-        const adminData = adminDoc.data() as UserDataWithVerification;
-        
-        // Use the admin's email from the document data, not the document ID
-        const adminEmail = adminData.email; 
-        
-        // Check if admin has verified the timetable
-        const isVerified = adminData.hasVerified === true;
-        setTimetableVisibility(isVerified);
+        const timetableDoc = snapshot.docs[0];
+        const timetable = timetableDoc.data() as TimeTableDoc;
 
-        if (isVerified) {
-          // If verified, fetch the timetable data using the admin's email
-          const timetableColRef = collection(db, 'TimeTable');
-          const timetableQuery = query(timetableColRef, where('email', '==', adminEmail));
-          const timetableSnap = await getDocs(timetableQuery);
+        const isVerified = timetable.hasVerified === true;
+        const isAdmin = userData.CanUploadEdit === true;
 
-          if (!timetableSnap.empty) {
-            const data = timetableSnap.docs[0].data() as TimeTableDoc;
-            setTimetableData(data);
-          } else {
-            setTimetableData(null);
-          }
+        if (isVerified || isAdmin) {
+          setTimetableData(timetable);
+          setTimetableVisibility(true);
+        } else {
+          setTimetableData(null);
+          setTimetableVisibility(false);
         }
-      } catch (err) {
-        console.error('Error fetching timetable status:', err);
-        setTimetableVisibility(false);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching timetable:', error);
         setTimetableData(null);
-      } finally {
+        setTimetableVisibility(false);
         setLoading(false);
       }
-    };
+    );
 
-    fetchTimetableAndStatus();
+    return () => unsubscribe();
   }, [user, userData]);
 
   // Set up timer to update current time every minute
@@ -352,11 +338,11 @@ const CurrentTimeTable = () => {
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="w-12 flex-shrink-0 mb-4 lg:mb-0">
-                <div className='w-full h-full'>
+            <div className='w-full h-full'>
                   <div className="relative h-full w-[30px] bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="absolute top-0 left-0 w-[30px] transition-all duration-1000 ease-out"
-                      style={{ height: `${progress}%` }}
+                    style={{ height: `${progress}%` }}
                     >
                       {/* Liquid background with gradient */}
                       <div className="absolute inset-0  bg-gradient-to-t from-[#6B7FFF] to-[#4C5FD5] to-85% rounded-full"></div>
@@ -621,11 +607,11 @@ const CurrentTimeTable = () => {
                   <div className="font-medium lg:text-lg text-center">Break</div>
                   <div className="opacity-80 text-[10px] numeric-input lg:text-lg ">
                     {breakInfo.start} {breakInfo.start && breakInfo.end ? ' - ' : ''} {breakInfo.end || ''}
-                  </div>
-                </div>
+            </div>
+          </div>
               ) : (
                 <span>No schedule</span>
-              )}
+        )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -685,9 +671,9 @@ const CurrentTimeTable = () => {
                       <div className="flex items-center gap-2">
                         {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                       </div>
+                      </div>
                     </div>
-                  </div>
-                  {activity && isExpanded && (
+                    {activity && isExpanded && (
                     <div className="p-4 pt-0">
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <div className="space-y-2 text-sm text-gray-300">
@@ -699,9 +685,9 @@ const CurrentTimeTable = () => {
                             <div className="break-words"><strong>Code:</strong> {activity.code}</div>
                           )}
                         </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </>
               );
 
@@ -719,9 +705,9 @@ const CurrentTimeTable = () => {
                     </div>
                   ) : (
                     // The standard card for non-current periods
-                    <div className="bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white">
+                    <div className="bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white mb-10">
                       {cardContent}
-                    </div>
+                  </div>
                   )}
                 </div>
               );

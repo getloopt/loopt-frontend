@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 
 // Menu items.
-const items = [
+const allItems = [
   {
     title: "Home",
     url: "/dashboard",
@@ -34,12 +34,18 @@ const items = [
     url: "/timetable",
     icon: Calendar,
   },
-
-]
+];
 
 export function AppSidebar() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, userData } = useAuth();
+
+  const items = allItems.filter(item => {
+    if (item.title === "Timetable") {
+      return userData?.CanUploadEdit;
+    }
+    return true;
+  });
 
   return (
     <Sidebar className="border-none rounded-xl flex flex-col h-full">

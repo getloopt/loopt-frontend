@@ -58,22 +58,29 @@ export const Contact2 = (props: Contact2Props) => {
       console.log("User not logged in")
       return
     }
-    setDepartment(department)
-    setYear(year)
-    setSection(section) 
-    console.log("--------------------------------")
-    console.log(department)
-    console.log(year)
-    console.log(section)  
-    console.log(auth.currentUser?.email)
-    if(department && year && section && semester){
+
+    const departmentLabel = departments.find(d => d.value === department)?.label;
+
+    const toRoman = (numStr: string): string => {
+      const num = parseInt(numStr, 10);
+      if (isNaN(num)) return numStr;
+      const romanMap: { [key: number]: string } = {
+        1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII', 8: 'VIII'
+      };
+      return romanMap[num] || numStr;
+    };
+
+    const yearRoman = toRoman(year);
+    const semesterRoman = toRoman(semester);
+
+    if(departmentLabel && yearRoman && section && semesterRoman){
       const docRef = await addDoc(collection(db, "users"), {
         uid: auth.currentUser?.uid,
         email: auth.currentUser?.email,
-        department: department,
-        year: year,
+        department: departmentLabel,
+        year: yearRoman,
         section: section,
-        semester: semester,
+        semester: semesterRoman,
         CanUploadEdit:false
       });
       if(docRef){

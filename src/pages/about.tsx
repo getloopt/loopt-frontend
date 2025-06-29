@@ -82,11 +82,24 @@ const AboutPage = () => {
       const querySnapshot = await getDocs(userQuery);
       if (!querySnapshot.empty) {
         const userRef = doc(db, "users", querySnapshot.docs[0].id);
+
+        // Convert department/year/semester to timetable format before saving
+        const deptLabel = departments.find(d => d.value === localData?.department)?.label || localData?.department;
+
+        const toRoman = (numStr: string): string => {
+          const num = parseInt(numStr, 10);
+          if (isNaN(num)) return numStr;
+          const romanMap: { [key: number]: string } = {
+            1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII', 8: 'VIII'
+          };
+          return romanMap[num] || numStr;
+        };
+
         await updateDoc(userRef, {
-          department: localData?.department,
-          year: localData?.year,
+          department: deptLabel,
+          year: toRoman(localData?.year),
           section: localData?.section,
-          semester: localData?.semester
+          semester: toRoman(localData?.semester)
         });
         // Refresh the global user data
         await refreshUserData();
@@ -126,6 +139,20 @@ const AboutPage = () => {
     return null;
   }
 
+  const getDepartmentValue = (dept: string) => {
+    const foundDept = departments.find(d => d.label === dept);
+    return foundDept ? foundDept.value : dept;
+  }
+
+  const fromRoman = (roman: string): string => {
+    if (!roman) return "";
+    const romanMap: { [key: string]: number } = {
+        'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8
+    };
+    // @ts-ignore
+    return romanMap[roman]?.toString() || roman;
+  };
+
   const AboutContent = () => (
     <section className="py-12 sm:xl:ml-60 sm:lg:ml-40 sm:md:ml-21 sm:md:mr-10 sm:ml-35">
       <div className="container">
@@ -154,7 +181,7 @@ const AboutPage = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
-                    {localData?.department ? departments.find(d => d.value === localData.department)?.label : "Select Department"}
+                    {localData?.department ? departments.find(d => d.value === getDepartmentValue(localData.department))?.label : "Select Department"}
                     <IoMdArrowDropdown />
                   </Button>
                 </DropdownMenuTrigger>
@@ -172,7 +199,7 @@ const AboutPage = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
-                    {localData?.year ? `Year ${localData.year}` : "Select Year"}
+                    {localData?.year ? `Year ${fromRoman(localData.year)}` : "Select Year"}
                     <IoMdArrowDropdown />
                   </Button>
                 </DropdownMenuTrigger>
@@ -194,7 +221,7 @@ const AboutPage = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
-                    {localData?.semester ? semesters.find(s => s.value === localData.semester)?.label : "Select Semester"}
+                    {localData?.semester ? semesters.find(s => s.value === fromRoman(localData.semester))?.label : "Select Semester"}
                     <IoMdArrowDropdown />
                   </Button>
                 </DropdownMenuTrigger>
