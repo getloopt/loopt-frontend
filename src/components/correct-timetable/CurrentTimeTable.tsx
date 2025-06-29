@@ -297,20 +297,16 @@ const CurrentTimeTable = () => {
   // Automatically scroll the currently active period card into view on first render
   const hasAutoScrolledRef = React.useRef(false);
   useEffect(() => {
-    if (hasAutoScrolledRef.current || currentPeriodIndex === -1 || !cardsContainerRef.current) {
-      return;
+    if (hasAutoScrolledRef.current) return;
+    if (currentPeriodIndex === -1) return;
+    if (!cardsContainerRef.current) return;
+
+    const cards = Array.from(cardsContainerRef.current.children) as HTMLElement[];
+    const card = cards[currentPeriodIndex];
+    if (card) {
+      card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      hasAutoScrolledRef.current = true;
     }
-
-    // Use a timeout to ensure the DOM is ready before scrolling.
-    const timerId = setTimeout(() => {
-      const card = cardsContainerRef.current?.children[currentPeriodIndex] as HTMLElement;
-      if (card) {
-        card.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        hasAutoScrolledRef.current = true;
-      }
-    }, 100); // 100ms delay to allow for rendering
-
-    return () => clearTimeout(timerId); // Cleanup the timeout
   }, [currentPeriodIndex]);
 
   const toggleExpand = (idx: number) => {
@@ -363,7 +359,7 @@ const CurrentTimeTable = () => {
                       style={{ height: `${progress}%` }}
                     >
                       {/* Liquid background with gradient */}
-                      <div className="absolute inset-0  bg-gradient-to-t from-[rgb(94,192,228)] to-[rgb(154,90,210)] to-85% rounded-full"></div>
+                      <div className="absolute inset-0  bg-gradient-to-t from-[#6B7FFF] to-[#4C5FD5] to-85% rounded-full"></div>
                       
                                               {/* Animated bubbles */}
                         <div className="absolute inset-0 overflow-hidden rounded-full group">
@@ -374,11 +370,55 @@ const CurrentTimeTable = () => {
                                  bottom: '5%',
                                  animation: 'float 2.5s ease-in-out infinite'
                                }}></div>
+
+                               <div className="absolute w-2 h-2 bg-white/70 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '15%',
+                                 bottom: '5%',
+                                 animation: 'float 2.5s ease-in-out infinite'
+                               }}></div>
+                               <div className="absolute w-2 h-2 bg-white/70 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '15%',
+                                 bottom: '12%',
+                                 animation: 'float 2.5s ease-in-out infinite'
+                               }}></div>
+
+                               <div className="absolute w-2 h-2 bg-white/70 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '50%',
+                                top: '39%',
+                                 animation: 'float 2.5s ease-in-out infinite'
+                               }}></div>
+
+                               {/* I wanna add more bubbles */}
+                               <div className="absolute w-3 h-3 bg-white/50 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '20%',
+                                 bottom: '25%',
+                                 animation: 'float 2.8s ease-in-out infinite 0.5s'
+                               }}></div>
+
+                               <div className="absolute w-3 h-3 bg-white/50 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '30%',
+                                 bottom: '35%',
+                                 animation: 'float 2.8s ease-in-out infinite 0.5s'
+                               }}></div>
+
+                              <div className="absolute w-3 h-3 bg-white/50 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '40%',
+                                 bottom: '45%',
+                                 animation: 'float 2.8s ease-in-out infinite 0.5s'
+                               }}></div>
+                               
+                               
                           
                           <div className="absolute w-1.5 h-1.5 bg-white/60 rounded-full shadow-sm"
                                style={{ 
-                                 left: '70%',
-                                 bottom: '15%',
+                                 left: '23%',
+                                 bottom: '34%',
                                  animation: 'float 2.8s ease-in-out infinite 0.5s'
                                }}></div>
                           
@@ -390,10 +430,66 @@ const CurrentTimeTable = () => {
                                  animation: 'float 2s ease-in-out infinite 0.8s'
                                }}></div>
                                
+                          {/* I wanna add more bubbles */}
+                          <div className="absolute w-1 h-1 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '85%',
+                                 top: '40%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                          <div className="absolute w-3 h-3 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '12%',
+                                 top: '30%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                          <div className="absolute w-2 h-2 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '10%',
+                                 top: '10%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+                           <div className="absolute w-2 h-2 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '60%',
+                                 top: '19%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+                            <div className="absolute w-2 h-2 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '30%',
+                                 top: '6%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                       <div className="absolute w-2 h-2 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '60%',
+                                 bottom: '19%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
                           <div className="absolute w-1 h-1 bg-white/55 rounded-full shadow-sm"
                                style={{ 
                                  left: '85%',
                                  bottom: '40%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+                          
+                          <div className="absolute w-1 h-1 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '80%',
+                                 bottom: '50%', 
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                                     
+                           <div className="absolute w-1.5 h-1.5 bg-white/55 rounded-full shadow-sm"
+                               style={{ 
+                                 left: '20%',
+                                 bottom: '1%', 
                                  animation: 'float 2.2s ease-in-out infinite 1.2s'
                                }}></div>
                           
@@ -404,6 +500,48 @@ const CurrentTimeTable = () => {
                                  bottom: '35%',
                                  animation: 'float 1.8s ease-in-out infinite 1.5s'
                                }}></div>
+                          <div className="absolute w-1 h-1 bg-white/40 rounded-full"
+                               style={{ 
+                                 left: '30%',
+                                 top: '2%',
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                          <div className="absolute w-0.5 h-0.5 bg-white/40 rounded-full"
+                               style={{ 
+                                 left: '30%',
+                                 bottom: '10%',
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                          <div className="absolute w-0.5 h-0.5 bg-white/40 rounded-full"
+                               style={{ 
+                                 left: '30%',
+                                 bottom: '50%',
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                          <div className="absolute w-1 h-1 bg-white/40 rounded-full"
+                               style={{ 
+                                 left: '30%',
+                                 top: '6%',
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                          <div className="absolute w-1 h-1 bg-white/40 rounded-full"
+                               style={{ 
+                                 left: '30%',
+                                 top: '40%',
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+
+                          <div className="absolute w-1 h-1 bg-white/40 rounded-full"
+                               style={{ 
+                                 left: '30%',
+                                 top: '60%',
+                                 animation: 'float 2.2s ease-in-out infinite 1.2s'
+                               }}></div>
+                               
                                
                           <div className="absolute w-0.5 h-0.5 bg-white/45 rounded-full"
                                style={{ 
@@ -467,21 +605,21 @@ const CurrentTimeTable = () => {
             </TooltipTrigger>
             <TooltipContent side="right" className="text-xs lg:text-lg">
               {currentPeriodIndex !== -1 ? (
-                <div className="space-y-0.5">
+                <div className="space-y-0.5 ">
                   <div className="font-medium">Period {periods[currentPeriodIndex].period}</div>
                   {periods[currentPeriodIndex].Activity?.[0]?.courseTitle ? (
                     <div>{periods[currentPeriodIndex].Activity[0].courseTitle}</div>
                   ) : (
                     <div>Free Period</div>
                   )}
-                  <div className="opacity-80 text-[10px] numeric-input">
+                  <div className="opacity-80 text-[10px] numeric-input lg:text-lg">
                     {periods[currentPeriodIndex].startTime} - {periods[currentPeriodIndex].endTime}
                   </div>
                 </div>
               ) : breakInfo ? (
                 <div className="space-y-0.5">
-                  <div className="font-medium lg:text-lg">Break</div>
-                  <div className="opacity-80 text-[10px] numeric-input lg:text-lg">
+                  <div className="font-medium lg:text-lg text-center">Break</div>
+                  <div className="opacity-80 text-[10px] numeric-input lg:text-lg ">
                     {breakInfo.start} {breakInfo.start && breakInfo.end ? ' - ' : ''} {breakInfo.end || ''}
                   </div>
                 </div>
@@ -502,14 +640,8 @@ const CurrentTimeTable = () => {
               const optIdx = selectedOption[idx] ?? 0;
               const activity = period.Activity[optIdx];
 
-              return (
-                <div
-                  key={idx}
-                  className={cn(
-                    "bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white transition-all sm:w-[26rem] w-[20rem] z-50 -translate-x-3",
-                    { "shadow-lg shadow-indigo-500": isCurrent }
-                  )}
-                >
+              const cardContent = (
+                <>
                   <div className="p-4 cursor-pointer" onClick={() => toggleExpand(idx)}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -554,7 +686,9 @@ const CurrentTimeTable = () => {
                         {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                       </div>
                     </div>
-                    {activity && isExpanded && (
+                  </div>
+                  {activity && isExpanded && (
+                    <div className="p-4 pt-0">
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <div className="space-y-2 text-sm text-gray-300">
                           <div className="break-words"><strong>Title:</strong> {activity.courseTitle}</div>
@@ -566,8 +700,29 @@ const CurrentTimeTable = () => {
                           )}
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </>
+              );
+
+              return (
+                <div key={idx} className="sm:w-[26rem] w-[20rem] z-50 -translate-x-3 transition-all duration-300">
+                  {isCurrent ? (
+                    <div className="relative">
+                      {/* The new glowing background div */}
+                      <div className="absolute -inset-1 bg-gradient-to-br from-indigo-400 via-purple-500 to-indigo-500 rounded-xl blur-xl opacity-70 animate-pulse transition-all duration-500"></div>
+                      
+                      {/* The more transparent foreground card */}
+                      <div className="relative bg-black backdrop-blur-md rounded-lg shadow-lg shadow-indigo-500/30 border border-white/10 text-white">
+                        {cardContent}
+                      </div>
+                    </div>
+                  ) : (
+                    // The standard card for non-current periods
+                    <div className="bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white">
+                      {cardContent}
+                    </div>
+                  )}
                 </div>
               );
             })
