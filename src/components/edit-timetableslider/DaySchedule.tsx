@@ -126,7 +126,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
     // Split by comma and process each name
     const facultyNames = rawInput.split(',').map(name => name.trim()).filter(name => name !== '');
     return facultyNames.map(name => ({
-      initial: name.charAt(0).toUpperCase(),
+      initial: name.split(/\s+/)[0].split(/\./).filter(part => part.length > 0 && part.toLowerCase() !== 'dr').map(part => part.charAt(0).toUpperCase()).join(''),
       name: name
     }));
   };
@@ -323,7 +323,9 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
                     {activity.faculty && activity.faculty.length > 0 && (
                       <div><strong>Faculty:</strong> {activity.faculty.map((f) => f.name).join(', ')}</div>
                     )}
-                    <div><strong>Code:</strong> {activity.code}</div>
+                    {activity.code!==null && (
+                      <div><strong>Code:</strong> {activity.code}</div>
+                    )}
 
                   </div>
                   
@@ -352,15 +354,15 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="code" className="text-md mb-0.5">Code</Label>
-              <Input id="code" value={formData.code || ''} onChange={(e) => setFormData({ ...formData, code: e.target.value as string | null })} placeholder="UBM2604" className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova" />
+              <Label htmlFor="code" className="text-md mb-0.5 numeric-input">Code</Label>
+              <Input id="code" value={formData.code || ''} onChange={(e) => setFormData({ ...formData, code: e.target.value as string | null })} placeholder="UBM2604" className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova placeholder:numeric-input numeric-input" />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="title" className="text-md mb-0.5">Title</Label>
-              <Input id="title" value={formData.courseTitle} onChange={(e) => setFormData({ ...formData, courseTitle: e.target.value })} placeholder="Course Title" className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova" />
+              <Label htmlFor="title" className="text-md mb-0.5 numeric-input">Title</Label>
+              <Input id="title" value={formData.courseTitle} onChange={(e) => setFormData({ ...formData, courseTitle: e.target.value })} placeholder="Course Title" className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova placeholder:numeric-input numeric-input" />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="faculty" className="text-md mb-0.5">Faculty (optional)</Label>
+              <Label htmlFor="faculty" className="text-md mb-0.5 numeric-input">Faculty (optional)</Label>
               <Input 
                 id="faculty" 
                 value={formData.faculty?.[0]?.name || ''} 
@@ -369,7 +371,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
                   faculty: [{ initial: '', name: e.target.value }]
                 })}
                 placeholder="Faculty names separated by commas" 
-                className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova" 
+                className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova placeholder:numeric-input" 
               />
             </div>
           </div>
@@ -399,7 +401,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
               <Input id="etitle" value={formData.courseTitle} onChange={(e) => setFormData({ ...formData, courseTitle: e.target.value })} placeholder="Course Title" className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova numeric-input" />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="faculty" className="text-md mb-0.5">Faculty (optional)</Label>
+              <Label htmlFor="faculty" className="text-md mb-0.5 numeric-input">Faculty (optional)</Label>
               <Input 
                 id="faculty" 
                 value={formData.faculty?.[0]?.name || ''} 
@@ -407,7 +409,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
                   ...formData,
                   faculty: [{ initial: '', name: e.target.value }]
                 })}
-                placeholder="Faculty names separated by commas" 
+                placeholder="Dr.K.Gowri, Dr.R.Suresh" 
                 className="border-white/10 border-1 p-5 text-lg placeholder:text-lg font-proxima-nova" 
               />
             </div>

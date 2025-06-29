@@ -3,60 +3,115 @@ import { NavBarDemo } from '@/components/Navbar';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
 import { Button } from "@/components/ui/ui/button";
-import { Edit2 } from "lucide-react";
+import { Upload, Edit } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import CurrentTimeTable from "@/components/correct-timetable/CurrentTimeTable";
+import { Sidebar, SidebarProvider, SidebarTrigger } from "@/components/ui/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
+import { useState } from "react";
+import { useRouter } from "next/router";
+import { doc, updateDoc, query, collection, where, getDocs } from "firebase/firestore";
+import { db } from "../../../firebase-config";
 
 export default function TimetableDashboard() {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative">
-      {/* Mobile View - Only NavBar */}
-      <div className="block sm:hidden">
-        <NavBarDemo />
-      </div>
+    <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
+      <div className="relative">
+        {/* Mobile View - Only NavBar */}
+        <div className="block sm:hidden">
+          <NavBarDemo />
+        </div>
 
-      {/* Desktop View - Layout with Sidebar */}
-      <div className="hidden lg:block">
-        <Layout>
+        {/* Desktop View - Layout with Sidebar */}
+        <div className="hidden lg:block">
+          <Layout>
+            <TimetableContent />
+          </Layout>
+        </div>
+
+        {/* Tablet View */}
+        <div className="max-sm:hidden md:block lg:hidden">
+          <div className="flex min-h-screen">
+            <div className="flex-none">
+              <AppSidebar />
+            </div>
+            <div className="flex-1">
+              <SidebarTrigger className="fixed top-4 left-4 md:left-6 ml-3"  />
+              <div className="translate-x-30 max-md:translate-x-20 md:-translate-x-3 ">
+                <TimetableContent />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Content */}
+        <div className="translate-x-10 hidden max-sm:block">
           <TimetableContent />
-        </Layout>
+        </div>
       </div>
-
-      {/* Tablet and Mobile Content */}
-      <div className="block lg:hidden">
-        <TimetableContent />
-      </div>
-    </div>
+    </SidebarProvider>
   );
 }
 
 function TimetableContent() {
-  const { userData,logout } = useAuth();
+  const { userData, logout } = useAuth();
   const canEditAndUpload = userData?.CanUploadEdit === true;
+  const router = useRouter();
+
+  const handleEditClick = async () => {
+    if (!userData?.email) return;
+    
+    // Find the user's document to set hasVerified to false
+    const usersCollection = collection(db, "users");
+    const q = query(usersCollection, where("email", "==", userData.email));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      const userDocRef = querySnapshot.docs[0].ref;
+      await updateDoc(userDocRef, {
+        hasVerified: false
+      });
+      router.push('/editTimetable');
+    } else {
+      console.error("Could not find user document to update.");
+      // Still navigate, maybe the doc will be created later
+      router.push('/editTimetable');
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[100vh] p-4">
-         <div className="flex justify-end items-center py-2 mb-2.5 absolute sm:top-4 top-0 right-8">
-            <Button
-              className=" button-logout border-white/20 border-1 font-proxima-nova"
-              onClick={logout}
-            >
-              Logout
-            </Button>
-          </div>
-
-        
-        {canEditAndUpload && (
-          <>
-            <Link href="/timetable/upload">
-              <Button className="flex items-center gap-2 px-6 py-4 text-lg">
-                <Edit2 className="w-5 h-5" />
-                Upload
-              </Button>
-            </Link>
-          </>
-        )}
+    <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 md:translate-x-80 lg:translate-x-80 mt-10 xl:translate-x-120">
+      <div className="flex justify-end items-center py-2 mb-2.5 absolute sm:top-4 top-[-25px] right-8 md:hidden lg:hidden sm:hidden">
+        <Button
+          className="button-logout border-white/20 border-1 font-proxima-nova"
+          onClick={logout}
+        >
+          Logout
+        </Button>
       </div>
+      <div className="mt-10 md:-translate-x-50">
+        <CurrentTimeTable />
+      </div>
+
+      {canEditAndUpload && (
+        <div className="absolute top-6 left-0 mt-[-40px] flex gap-7 max-sm:gap-12 max-sm:left-0 max-md:gap-34 max-md:left-28 md:gap-15 md:-left-20 lg:-left-28 lg:gap-38">
+          <Link href="/timetable/upload">
+            <Button className="flex items-center xl:absolute xl:-left-90 gap-2 px-3 py-4 text-sm ml-3  lg:-left-50 sm:left-0 sm:ml-2 max-sm:top-12 md:ml-4 md:-left-45">
+              <Upload className="w-5 h-5" />
+              Upload
+            </Button>
+          </Link>
+          <Button 
+            onClick={handleEditClick}
+            className="flex items-center gap-2 px-3 py-4 text-sm ml-3 xl:absolute xl:left-140 lg:-left-60 sm:left-0 sm:ml-2 max-sm:top-12 md:ml-4 md:-left-45"
+          >
+            <Edit className="w-5 h-5" />
+            Edit
+          </Button>
+        </div>
+      )}
+    </div>
   );
 } 

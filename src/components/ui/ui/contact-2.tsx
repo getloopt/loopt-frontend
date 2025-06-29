@@ -157,7 +157,7 @@ export const Contact2 = (props: Contact2Props) => {
                   value={section}
                   onChange={(e) => setSection(e.target.value)}
                   placeholder="Enter your section"
-                  className="bg-zinc-800 p-6 text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80"
+                  className="bg-zinc-800 p-6 text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80 placeholder:text-sm"
                 />
               </div>
 
@@ -174,7 +174,7 @@ export const Contact2 = (props: Contact2Props) => {
                   <DropdownMenuContent className="w-full sm:w-[600px] bg-zinc-800 border-none gap-2 pt-2">
                     {semesters.map((sem) => (
                       <DropdownMenuItem
-                        className="cursor-pointer text-white sm:text-lg hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova"
+                        className="cursor-pointer text-white sm:text-lg numeric-input hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova"
                         key={sem.value}
                         onClick={() => setSemester(sem.value)}
                       >

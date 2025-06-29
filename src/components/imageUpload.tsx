@@ -187,6 +187,7 @@ export function ImageUploadDemo() {
       // Now, update the found document
       await updateDoc(userDocRef, {
         "image-timetable": publicUrl,
+        "hasVerified": false,
       }).then(() => {
         setIsOpen(true)
         

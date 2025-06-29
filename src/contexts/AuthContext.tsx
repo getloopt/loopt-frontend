@@ -4,7 +4,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { auth, db } from '../../firebase-config';
 import { useRouter } from 'next/router';
 
-interface UserData {
+export interface UserData {
   email: string;
   department?: string;
   year?: string;

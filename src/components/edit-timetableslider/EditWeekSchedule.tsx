@@ -48,7 +48,7 @@ export default function EditWeekSchedule() {
           </div>
     <div className="flex flex-col w-full px-4 md:px-10 lg:px-20 mt-18">
      
-      <OptionCarousel setApi={setApi} />
+      <OptionCarousel setApi={setApi} api={api} />
 
       {/* Timetable-info slide (index 1) */}
       <div

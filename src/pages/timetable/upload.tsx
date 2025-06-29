@@ -32,7 +32,7 @@ export default function UploadPage() {
               <AppSidebar />
             </div>
             <div className="flex-1">
-              <SidebarTrigger className="absolute top-4 left-4" />
+              <SidebarTrigger className="fixed top-4 left-4 z-50 md:left-6" />
               <div className="translate-x-30">
                <UploadContent/>
               </div>

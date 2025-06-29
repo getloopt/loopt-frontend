@@ -587,3 +587,22 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   font-feature-settings: "tnum" on, "lnum" on;
 }
+.progress-container {
+  padding-top: 0; 
+  margin-top: 0;
+}
+
+.cards-container {
+  padding-top: 0.5rem;
+  margin-top: 0;
+}
+.progress-bar {
+  background: linear-gradient(135deg, 
+    #6b21a8 0%, 
+    #a21caf 15%, 
+    #db2777 30%, 
+    #f97316 50%, 
+    #facc15 65%, 
+    #84cc16 80%, 
+    #22c55e 100%);
+}

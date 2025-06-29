@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -12,6 +13,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/ui/sidebar"
+
+import { Button } from "@/components/ui/ui/button"
+import { useAuth } from "@/contexts/AuthContext"
 
 // Menu items.
 const items = [
@@ -35,14 +39,15 @@ const items = [
 
 export function AppSidebar() {
   const router = useRouter();
+  const { logout } = useAuth();
 
   return (
-    <Sidebar className="border-none rounded-xl">
-      <SidebarContent>
+    <Sidebar className="border-none rounded-xl flex flex-col h-full">
+      <SidebarContent className="flex-1">
         <SidebarGroup>
           <SidebarGroupLabel className="h-10 text-[20px] font-proxima-nova font-medium">Application</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="flex-1 overflow-y-auto">
               {items.map((item) => {
                 const isActive = router.pathname === item.url;
                 return (
@@ -63,6 +68,13 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      {/* Footer with Logout */}
+      <SidebarFooter className="mt-auto p-4 border-t border-white/10">
+        <Button variant="outline" className="w-full font-proxima-nova hover:bg-none button-logout hover:text-white border-white/20 border-1" onClick={logout}>
+          Logout
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   )
 } 
