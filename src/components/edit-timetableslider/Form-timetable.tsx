@@ -251,7 +251,7 @@ const FormTimetable = () => {
                     {/* Add Course Card wrapped with DialogTrigger */}
                     <Dialog>
                         <DialogTrigger asChild>
-                            <div className='bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white p-10 cursor-pointer hover:bg-black/40 transition'>
+                            <div className='bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white p-10 cursor-pointer hover:bg-black/40 transition w-[20rem] sm:w-[30rem]'>
                                 <div className='flex flex-col items-center justify-center w-full h-[5vh] py-10 border-2 border-white/15 border-dashed '>
                                     <Plus className='w-5 h-5 mb-1 text-white/40' />
                                     <h2 className='text-lg font-semibold text-white/40'>Add New Course</h2>
@@ -478,7 +478,7 @@ const FormTimetable = () => {
                                 </div>
                             </div>
                             <DialogFooter className='flex justify-between gap-35 bottom-0 bg-[#141415] py-4'>
-                                <Button onClick={handleSaveEdit} className='w-1/4 bottom-0 absolute right-5 button-normal'>Save Changes</Button>
+                                <Button onClick={handleSaveEdit} className='w-1/4 bottom-0 absolute right-5 button-normal '>Save</Button>
                                 <DialogClose asChild>
                                     <Button variant='secondary' type='button' className='w-1/4 absolute bottom-0 left-5 button-close'>Cancel</Button>
                                 </DialogClose>
@@ -491,7 +491,7 @@ const FormTimetable = () => {
                         const courseCardId = `course-${course.code}`;
                         const isCourseExpanded = expandedCards[courseCardId];
                         return (
-                            <div key={course.code} className="bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white sm:w-[30rem] w-[28rem]">
+                            <div key={course.code} className="bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white sm:w-[30rem] w-[20rem]">
                                 <div className="p-4 cursor-pointer" onClick={() => toggleCardExpand(courseCardId)}>
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">

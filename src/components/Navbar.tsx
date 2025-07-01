@@ -7,9 +7,8 @@ export function NavBarDemo() {
   const { userData } = useAuth();
   const allNavItems = [
     { name: 'Home', url: '/dashboard', icon: Home },
-    { name: 'About', url: '/about', icon: User },
+    { name: 'Profile', url: '/about', icon: User },
     { name: 'Timetable', url: '/timetable', icon: Mail },
-    {name:'Items',url:'/items',icon:ShoppingCart}
    
   ]
 
@@ -21,7 +20,6 @@ export function NavBarDemo() {
   });
 
   return (
-    
    <NavBar items={navItems} />
   )
 }

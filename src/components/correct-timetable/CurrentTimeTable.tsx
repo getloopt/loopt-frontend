@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../firebase-config';
 import { useAuth, UserData } from '@/contexts/AuthContext';
+import OptionCarousel from '../optioncarousel';
+import { type CarouselApi } from "@/components/ui/ui/carousel"
 
 // --- Type definitions ---
 interface Activity {
@@ -31,6 +33,8 @@ interface TimetableData {
 
 interface UserDataWithVerification extends UserData {
   hasVerified?: boolean;
+  CanUploadEdit?: boolean;
+
 }
 
 interface TimeTableDoc {
@@ -93,6 +97,40 @@ const CurrentTimeTable = () => {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [selectedOption, setSelectedOption] = useState<Record<string, number>>({});
   const cardsContainerRef = React.useRef<HTMLDivElement>(null);
+  const [api, setApi] = React.useState<CarouselApi>()
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+
+  const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const isToday = selectedDay === todayName;
+
+  useEffect(() => {
+    if (!api) {
+      return
+    }
+
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    const handleSelect = () => {
+      const selectedIndex = api.selectedScrollSnap();
+      setSelectedDay(days[selectedIndex]);
+      setCurrentSlide(selectedIndex);
+    };
+
+    api.on("select", handleSelect);
+    // Set initial day
+    handleSelect();
+    
+    // Set carousel to today's date on initial load
+    const dayIndex = days.indexOf(todayName);
+    if (dayIndex !== -1) {
+      api.scrollTo(dayIndex);
+    }
+
+
+    return () => {
+      api.off("select", handleSelect)
+    }
+  }, [api, todayName])
 
   // Derived info for tooltip: identify current break range if not in a period
   const breakInfo = React.useMemo(() => {
@@ -120,7 +158,7 @@ const CurrentTimeTable = () => {
   // Effect to fetch timetable and set current day logic
   useEffect(() => {
     const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    setSelectedDay('Monday'); 
+    //setSelectedDay(todayName); // This is now handled by the carousel's useEffect
 
     if (!user?.email || !userData) {
       setLoading(false);
@@ -313,11 +351,22 @@ const CurrentTimeTable = () => {
   if (!timetableVisibility || !timetableData) {
     return (
       <div className="w-full max-w-5xl mx-auto p-4 text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Timetable Not Available</h2>
-        <p className="text-white/70">Please wait for your section administrator to publish the timetable.</p>
+        {userData?.CanUploadEdit===true && (
+          <>
+            <h2 className="text-2xl font-bold text-white mb-2">Timetable Not Available</h2>
+            <p className="text-white/70">You still haven't uploaded the timetable.</p>
+          </>
+        )}
+        {userData?.CanUploadEdit===false && (
+          <>
+            <h2 className="text-2xl font-bold text-white mb-2">Timetable Not Available</h2>
+            <p className="text-white/70">Please wait for your section administrator to publish the timetable.</p>
+          </>
+        )}
       </div>
     );
   }
+
 
   if (!timetableData && (selectedDay !== 'Saturday' && selectedDay !== 'Sunday')) {
     return <div className='text-white'>Loading timetable... Make sure you have uploaded one.</div>;
@@ -327,19 +376,18 @@ const CurrentTimeTable = () => {
     <div className="w-full max-w-5xl mx-auto p-4">
       {/* Static Day Display */}
       <div className="flex items-center justify-center mb-6">
-        <div className="px-6 py-2 rounded-md bg-black/30 border border-white/10">
-            <h2 className="text-xl font-semibold text-white text-center">{selectedDay}</h2>
-        </div>
+        <OptionCarousel api={api} setApi={setApi} />
       </div>
 
       <div className="flex gap-4 lg:gap-8">
         {/* Vertical ticker for all viewports */}
+        {isToday && (
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="w-12 flex-shrink-0 mb-4 lg:mb-0">
             <div className='w-full h-full'>
-                  <div className="relative h-full w-[30px] bg-white/10 rounded-full overflow-hidden">
+                  <div className="relative h-full w-[30px] bg-white/10 rounded-full overflow-hidden max-sm:-translate-x-2">
                     <div
                       className="absolute top-0 left-0 w-[30px] transition-all duration-1000 ease-out"
                     style={{ height: `${progress}%` }}
@@ -615,9 +663,10 @@ const CurrentTimeTable = () => {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        )}
 
         {/* --- Period Cards --- */}
-        <div className="flex-1 space-y-4 pb-15" ref={cardsContainerRef}>
+        <div className={cn("flex-1 space-y-4 pb-15 max-sm:-translate-x-4  w-[200%]", !isToday && "max-sm:translate-x-6")} ref={cardsContainerRef}>
           {periods.length > 0 ? (
             periods.map((period, idx) => {
               const isCurrent = currentPeriodIndex === idx;
@@ -690,10 +739,10 @@ const CurrentTimeTable = () => {
                     )}
                 </>
               );
-
+              
               return (
-                <div key={idx} className="sm:w-[26rem] w-[20rem] z-50 -translate-x-3 transition-all duration-300">
-                  {isCurrent ? (
+                <div key={idx} className={`sm:w-[26rem] w-[20rem] z-50 -translate-x-3 transition-all duration-300 ${isToday ? 'max-sm:w-[18rem]': ''}`}>
+                  {isCurrent && isToday ? (
                     <div className="relative">
                       {/* The new glowing background div */}
                       <div className="absolute -inset-1 bg-gradient-to-br from-indigo-400 via-purple-500 to-indigo-500 rounded-xl blur-xl opacity-70 animate-pulse transition-all duration-500"></div>

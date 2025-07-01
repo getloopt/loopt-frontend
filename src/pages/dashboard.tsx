@@ -41,14 +41,7 @@ export default function Dashboard() {
       <div className="sm:hidden">
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <NavBarDemo />
-          <div className="flex justify-end items-center py-2 mb-2.5 absolute top-0 right-2 sm:hidden">
-            <Button
-              className="bg-zinc-800 border-white/20 border-1 hover:bg-white hover:text-black hover:cursor-pointer font-proxima-nova"
-              onClick={logout}
-            >
-              Logout
-            </Button>
-          </div>
+
           <CurrentTimeTable />
         </div>
       </div>

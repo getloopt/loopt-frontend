@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/ui/dropdown-menu"
 import { IoMdArrowDropdown } from "react-icons/io";
+import { toast } from "sonner";
 
 interface Contact2Props {
   title?: string;
@@ -84,12 +85,12 @@ export const Contact2 = (props: Contact2Props) => {
         CanUploadEdit:false
       });
       if(docRef){
-        alert("Details submitted successfully")
+        toast.success("Details submitted successfully")
         router.push('/dashboard')
       }
     }
     else{
-      alert("Please fill all the details")
+      toast.error("Please fill all the details")
     } 
   };
 
@@ -144,7 +145,7 @@ export const Contact2 = (props: Contact2Props) => {
                   <DropdownMenuContent className="w-full sm:w-[600px] bg-zinc-800 border-none gap-2 pt-2">
                     {years.map((y) => (
                       <DropdownMenuItem
-                        className="cursor-pointer text-white sm:text-lg hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova"
+                        className="cursor-pointer text-white sm:text-lg hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova numeric-input"
                         key={y}
                         onClick={() => setYear(y)}
                       >

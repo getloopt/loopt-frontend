@@ -12,7 +12,7 @@ export interface UserData {
   semester?: string;
   CanUploadEdit?: boolean;
   hasVerified?: boolean;
-}
+    }
 
 interface AuthContextType {
   user: User | null;

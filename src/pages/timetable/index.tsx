@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { doc, updateDoc, query, collection, where, getDocs } from "firebase/firestore";
 import { db } from "../../../firebase-config";
+import { DropdownSM } from "@/components/dropdown-sm";
 
 export default function TimetableDashboard() {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,7 +48,7 @@ export default function TimetableDashboard() {
         </div>
 
         {/* Mobile Content */}
-        <div className="translate-x-10 hidden max-sm:block">
+        <div className="translate-x-10 hidden max-sm:block w-[100%]">
           <TimetableContent />
         </div>
       </div>
@@ -82,34 +83,22 @@ function TimetableContent() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 md:translate-x-80 lg:translate-x-80 mt-10 xl:translate-x-120">
-      <div className="flex justify-end items-center py-2 mb-2.5 absolute sm:top-4 top-[-25px] right-8 md:hidden lg:hidden sm:hidden">
+    <div className="flex flex-col items-center justify-center min-h-[100vh] w-[100%] p-4 md:translate-x-80 lg:translate-x-80 mt-10 xl:translate-x-120">
+      <div className="flex justify-end items-center py-2 mb-2.5 absolute sm:top-4 top-[-25px] right-8 md:hidden lg:hidden sm:hidden ">
         <Button
-          className="button-logout border-white/20 border-1 font-proxima-nova"
+          className="button-logout border-white/20 border-1 font-proxima-nova max-sm:hidden"
           onClick={logout}
         >
           Logout
         </Button>
       </div>
-      <div className="mt-10 md:-translate-x-50">
+      <div className="mt-1 md:-translate-x-50 max-sm:-translate-x-10">
         <CurrentTimeTable />
       </div>
 
       {canEditAndUpload && (
-        <div className="absolute top-6 left-0 mt-[-40px] flex gap-7 max-sm:gap-12 max-sm:left-0 max-md:gap-34 max-md:left-28 md:gap-15 md:-left-20 lg:-left-28 lg:gap-38">
-          <Link href="/timetable/upload">
-            <Button className="flex items-center xl:absolute xl:-left-90 gap-2 px-3 py-4 text-sm ml-3  lg:-left-50 sm:left-0 sm:ml-2 max-sm:top-12 md:ml-4 md:-left-45">
-              <Upload className="w-5 h-5" />
-              Upload
-            </Button>
-          </Link>
-          <Button 
-            onClick={handleEditClick}
-            className="flex items-center gap-2 px-3 py-4 text-sm ml-3 xl:absolute xl:left-140 lg:-left-60 sm:left-0 sm:ml-2 max-sm:top-12 md:ml-4 md:-left-45"
-          >
-            <Edit className="w-5 h-5" />
-            Edit
-          </Button>
+        <div className="fixed top-2 xl:left-30 2xl:left-80 z-5 lg:left-10 md:left-10 sm:left-26 max-sm:-left-23 max-sm:-mt-10">
+          <DropdownSM />
         </div>
       )}
     </div>

@@ -25,7 +25,7 @@ const allItems = [
     icon: Home,
   },
   {
-    title: "About",
+    title: "Profile",
     url: "/about",
     icon: Info,
   },

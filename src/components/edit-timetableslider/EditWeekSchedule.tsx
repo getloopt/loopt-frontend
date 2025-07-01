@@ -38,14 +38,6 @@ export default function EditWeekSchedule() {
   const selectedDay = dayMap[current];
   return (
     <div>
-         <div className="fixed top-4 right-8 z-50 flex items-center">
-            <Button
-              className=" button-logout border-white/20 border-1 font-proxima-nova"
-              onClick={logout}
-            >
-              Logout
-            </Button>
-          </div>
     <div className="flex flex-col w-full px-4 md:px-10 lg:px-20 mt-18">
      
       <OptionCarousel setApi={setApi} api={api} />
@@ -60,7 +52,7 @@ export default function EditWeekSchedule() {
       {/* Day schedule slides */}
       {selectedDay && (
         <div
-          className={`mt-4 w-full max-w-2xl mx-auto sm:overflow-y-auto overflow-auto scroll-smooth pb-30 sm:h-[90vh] xl:translate-x-50 lg:translate-x-10 md:translate-x-10 sm:translate-x-24 ${current !== 1 ? '' : 'hidden'}`}
+          className={`mt-4 w-full max-w-2xl mx-auto sm:overflow-y-auto overflow-auto scroll-smooth pb-30 sm:h-[90vh] xl:translate-x-35 xl:translate-y-1 sm:translate-x-30 md:-translate-x-3 lg:translate-x-10 ${current !== 1 ? '' : 'hidden'}`}
         >
           <DaySchedule day={selectedDay} />
         </div>

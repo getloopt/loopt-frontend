@@ -81,6 +81,44 @@ export function ImageUploadDemo() {
 
       const data = await response.json();
       console.log("Timetable data received:", data);
+
+      // Verify the timetable data was properly uploaded to Firestore
+      const timetableCollection = collection(db, "TimeTable");
+      const q = query(timetableCollection, 
+        where("department_uploaded", "==", details.department),
+        where("year_uploaded", "==", details.year),
+        where("section_uploaded", "==", details.section),
+        where("semester_uploaded", "==", details.semester)
+      );
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        toast.error("Error: Timetable data not found in database");
+        router.push('/timetable/upload');
+        return;
+      }
+
+      const timetableDoc = querySnapshot.docs[0].data();
+      // Check if all required fields are present
+      if (!timetableDoc.day || !timetableDoc.PeriodandTimings || !timetableDoc.classRoom) {
+        toast.error("Error: Your upload data didn't match the format", {
+          description: "Please try uploading the image again"
+        });
+        router.push('/timetable/upload');
+        return;
+      }
+
+      // Check if day object has all required days and their periods
+      const requiredDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+      const missingDays = requiredDays.filter(day => !timetableDoc.day[day]);
+      if (missingDays.length > 0) {
+        toast.error("Error: Missing timetable data for some days", {
+          description: `Missing data for: ${missingDays.join(', ')}`
+        });
+        router.push('/timetable/upload');
+        return;
+      }
+
       router.push('/editTimetable');
 
     } catch (error) {
@@ -224,14 +262,6 @@ export function ImageUploadDemo() {
 
   return (
     <div>
-            <div className="flex justify-end items-center py-2 mb-2.5 absolute top-0 -right-10 xl:-right-140 md:-right-70 sm:-right-20 lg:-right-100">
-            <Button
-              className=" button-logout border-white/20 border-1 font-proxima-nova"
-              onClick={logout}
-            >
-              Logout
-            </Button>
-            </div>
     <div className="flex flex-col items-center justify-center w-90vw h-90vh ">
            {/* Add the AlertDialog here */}
            <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
@@ -256,7 +286,7 @@ export function ImageUploadDemo() {
       </AlertDialog>
      
         
-    <div className="w-[25rem] sm:w-[30rem] space-y-6 rounded-xl border border-border bg-[#141415] p-6 shadow-sm xl:translate-x-80 lg:translate-x-30 md:-translate-x-20 ">
+    <div className="w-[20rem] sm:w-[30rem] max-sm:-translate-x-1 space-y-6 rounded-xl border border-border bg-[#141415] p-6 shadow-sm xl:translate-x-80 lg:translate-x-30 md:-translate-x-20 ">
       <div className="space-y-2">
         <h3 className="text-lg font-medium sm:text-xl">Image Upload</h3>
         <p className="text-sm text-muted-foreground sm:text-lg">

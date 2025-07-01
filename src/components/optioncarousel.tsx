@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Check, Sparkles } from 'lucide-react'
 import {
     Carousel,
@@ -25,6 +25,7 @@ import {
   AlertDialogTrigger 
 } from '@/components/ui/ui/alert-dialog'
 import { GradientButton } from './ui/gradient-button'
+import { useRouter } from 'next/router'
 
 interface OptionCarouselProps {
     setApi: (api: CarouselApi) => void;
@@ -33,8 +34,23 @@ interface OptionCarouselProps {
 
 const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
     const { userData } = useAuth();
+    const router = useRouter();
     const canEditAndUpload = userData?.CanUploadEdit === true;
     const [isAtEnd, setIsAtEnd] = React.useState(false);
+    
+    const isEditPage = router.pathname === '/editTimetable';
+    const isTimetable = router.pathname === '/timetable';
+    console.log(isEditPage);
+    const carouselDays = useMemo(() => {
+        return isEditPage 
+            ? ['Timetable Information', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+            : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    }, [isEditPage]);
+
+    // Get current day name
+    const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    const [selectedDay, setSelectedDay] = React.useState(todayName);
+    const isCurrentDay = selectedDay === todayName;
   
     useEffect(() => {
       if (!api) {
@@ -42,8 +58,10 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
       }
   
       const handleSelect = () => {
-        // The last slide index is 5 (since there are 6 slides, indexed 0-5)
-        setIsAtEnd(api.selectedScrollSnap() === 5);
+        const selectedIndex = api.selectedScrollSnap();
+        const currentSelectedDay = carouselDays[selectedIndex];
+        setSelectedDay(currentSelectedDay);
+        setIsAtEnd(selectedIndex === carouselDays.length - 1);
       };
   
       api.on("select", handleSelect);
@@ -53,7 +71,7 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
       return () => {
         api.off("select", handleSelect);
       };
-    }, [api]);
+    }, [api, carouselDays]);
 
     const handleSaveAndPublish = async () => {
     if (!userData?.email) {
@@ -74,7 +92,7 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
           hasVerified: true
         });
         const timetableCollection = collection(db, "TimeTable");
-        const timetableQuery = query(timetableCollection, where("email", "==", userData.email));
+        const timetableQuery = query(timetableCollection, where("department_uploaded", "==", userData.department), where("year_uploaded", "==", userData.year), where("section_uploaded", "==", userData.section), where("semester_uploaded", "==", userData.semester));
         const timetableSnapshot = await getDocs(timetableQuery);
         if (!timetableSnapshot.empty) {
           const timetableDocRef = timetableSnapshot.docs[0].ref;
@@ -85,6 +103,7 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
         toast.success("Timetable published successfully!", {
             description: "All students can now view the updated timetable.",
         });
+        router.push('/dashboard');
       } else {
         throw new Error("User document not found.");
       }
@@ -94,14 +113,16 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
     }
   };
 
+  const showSaveButton = canEditAndUpload && isAtEnd && isEditPage;
+
   return (
     <AlertDialog>
       <Carousel 
         setApi={setApi} 
-        className='sm:w-[300px] sm:h-[50px] w-[210px] h-[50px] bg-white/17 border-1 rounded-lg border-white/17 md:translate-x-30 lg:translate-x-43 max-sm:translate-x-30 sm:translate-x-40 xl:translate-x-70'
+        className={`sm:w-[300px] sm:h-[50px] w-[210px] h-[50px] bg-white/17 border-1 rounded-lg border-white/17 md:translate-x-2  ${isCurrentDay ? 'lg:translate-x-8 md:translate-x-10 max-sm:-translate-x-2' : 'lg:-translate-x-5'} ${isEditPage ? 'max-sm:translate-x-17 lg:translate-x-40 xl:translate-x-60 sm:translate-x-55 md:translate-x-28'  : 'xl:translate-x-2 sm:translate-x-1 '}  max-sm:mt-2 `}
       >
         <CarouselContent>
-          {['Timetable Information', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => (
+          {carouselDays.map((day) => (
             <CarouselItem key={day}>
               <div>
                 <h1 className='text-white text-lg md:text-xl text-center mt-2 font-sans font-medium'>{day}</h1>
@@ -110,7 +131,7 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
           ))}
         </CarouselContent>
         <CarouselPrevious className="bg-[#141415] rounded-full border-1 border-white/17 p-2 hover:bg-[#141415] hover:border-white/17 hover:text-white"/>
-        {canEditAndUpload && isAtEnd ? (
+        {showSaveButton ? (
           <AlertDialogTrigger asChild>
             <Button className="absolute right-[-90px] top-1/2 -translate-y-1/2 bg-[#141415] rounded-full border-1 border-white/17 p-2 h-8 w-20 hover:bg-[#141415] hover:border-white/17 hover:text-white">
               Save

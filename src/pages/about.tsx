@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/ui/alert-dialog"
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,11 +104,11 @@ const AboutPage = () => {
         });
         // Refresh the global user data
         await refreshUserData();
-        alert("Profile updated successfully!");
+        toast.success("Profile updated successfully!");
       }
     } catch (error) {
       console.error("Error updating user:", error);
-      alert("Failed to update profile. Please try again.");
+      toast.error("Failed to update profile. Please try again.");
     }
   }
 
@@ -157,14 +158,6 @@ const AboutPage = () => {
     <section className="py-12 sm:xl:ml-60 sm:lg:ml-40 sm:md:ml-21 sm:md:mr-10 sm:ml-35">
       <div className="container">
         <div className="mx-auto flex max-w-screen-xl flex-col justify-between gap-10 lg:flex-row lg:gap-20">
-          <div className="flex justify-end items-center py-2 mb-2.5 absolute sm:top-4 sm:right-4 top-0 right-2">
-            <Button
-              className="bg-zinc-800 border-white/20 border-1 hover:bg-white hover:text-black hover:cursor-pointer font-proxima-nova"
-              onClick={logout}
-            >
-              Logout
-            </Button>
-          </div>
           <div className="mx-auto flex max-w-screen-md sm:w-[55vw] w-[90vw] flex-col gap-6 rounded-lg p-10 bg-black shadow-lg shadow-indigo-500 mt-10">
             <div className="text-center lg:text-left">
               <h1 className="mb-2 text-3xl font-bold lg:mb-1 lg:text-4xl font-proxima-nova letter-spacing-1">
@@ -214,7 +207,7 @@ const AboutPage = () => {
             </div>
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="section" className="text-white font-proxima-nova font-bold">Section</Label>
-              <Input type="text" id="section" value={localData?.section || ""} onChange={(e) => setLocalData({...localData, section: e.target.value})} placeholder="Enter your section" className="bg-zinc-800 mt-2 p-6  text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80" />
+              <Input type="text" id="section" value={localData?.section || ""} onChange={(e) => setLocalData({...localData, section: e.target.value.toUpperCase()})} placeholder="Enter your section" className="bg-zinc-800 mt-2 p-6  text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80" />
             </div>
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="semester" className="text-white font-proxima-nova font-bold">Semester</Label>
@@ -227,7 +220,7 @@ const AboutPage = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="max-sm:w-[90vw] sm:w-[55vw] bg-zinc-800 border-none gap-2 pt-2">
                   {semesters.map((sem) => (
-                    <DropdownMenuItem className="cursor-pointer text-white sm:text-lg hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova" key={sem.value} onClick={() => setLocalData({...localData, semester: sem.value})}>
+                    <DropdownMenuItem className="cursor-pointer text-white sm:text-lg hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova numeric-input" key={sem.value} onClick={() => setLocalData({...localData, semester: sem.value})}>
                       {sem.label}
                     </DropdownMenuItem>
                   ))}
@@ -237,6 +230,12 @@ const AboutPage = () => {
             <Button className="inline-flex items-center justify-center whitespace-nowrap rounded-md sm:hover:cursor-pointer text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground hover:bg-primary/90 hover:cursor-pointer h-10 px-4 py-2 w-[50%] translate-x-1/2 z-20 mt-2 bg-[#32317f] border-white/20 border-1 font-proxima-nova" onClick={updateUser}>
               Save Changes
             </Button>
+            <div className="mt-8 p-4 border border-white/20 rounded-lg">
+              <h2 className="text-stone-400 font-proxima-nova font-bold text-lg mb-4 border-b border-white/20 pb-2">Logout</h2>
+              <p className="text-white/80 font-proxima-nova text-sm">This action will logout you from the app.</p>
+              <Button className="w-full mt-4 bg-zinc-800 border-white/20 border-1 hover:bg-zinc-700 hover:cursor-pointer font-proxima-nova" onClick={logout}>Logout</Button>
+            </div>
+            
             <div className="mt-8 p-4 border border-white/20 rounded-lg">
               <h2 className="text-red-500 font-proxima-nova font-bold text-lg mb-4 border-b border-white/20 pb-2">Delete Account</h2>
               <p className="text-white/80 font-proxima-nova text-sm">This action is irreversible and will delete your account permanently.</p>

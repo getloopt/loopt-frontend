@@ -52,6 +52,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
             if (!querySnapshot.empty) {
               const timetableDoc = querySnapshot.docs[0].data() as TimetableData;
               
+              if (timetableDoc && timetableDoc.day && timetableDoc.PeriodandTimings) {
               const dayData: Period[] = timetableDoc.day[day] || [];
               setRoomData(timetableDoc.classRoom || '');
               
@@ -69,6 +70,11 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
               });
       
               setPeriods(fullPeriods);
+              } else {
+                console.error("Fetched timetable document is incomplete.", timetableDoc);
+                setPeriods([]);
+                setRoomData('');
+              }
             }
         } catch (error) {
             console.error("Error fetching timetable from Firestore:", error);
@@ -265,81 +271,83 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
         const activity = period.Activity[optIdx];
 
         return (
-          <div key={idx} className="bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white sm:w-[30rem] w-[28rem]">
-            <div
-              className={`p-4 cursor-pointer ${isExpanded ? '' : 'min-h-[140px]'}`}
-              onClick={() => toggleExpand(idx)}
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                
-                  <div className="flex items-center gap-2 mb-1">
-                  <span className='absolute z-50 right-10'> <Trash2 className='w-4 h-4 mr-3 mb-2 hover:text-red-500' onClick={(e) => handleDeleteActivity(idx, e)}/> </span>
-                    <span className="font-semibold text-md sm:text-lg">Period {period.period}</span>
-                    <span className="text-xs flex items-center gap-1"><Clock className="w-3 h-3" /> {period.startTime} - {period.endTime}</span>
-                    
-                    
-                  </div>
-                  {optCount > 1 && optCount > 0 && (
-                    <div className="flex items-center gap-2 text-sm mb-2">
-                      <span className="text-white">Option {optIdx + 1} of {optCount}</span>
-                      {[...Array(optCount)].map((_, o) => (
-                        <button
-                          key={o}
-                          onClick={(e) => { e.stopPropagation(); handleOptionChange(idx, o); }}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${o === optIdx ? 'bg-[#5d4c9d]' : 'bg-white/25'} text-white`}
-                        >{o + 1}</button>
-                      ))}
-                    </div>
-                  )}
-                  {activity ? (
-                    <div className="p-2 rounded border border-violet-400/50 backdrop-blur-sm">
-                      {activity.code!==null ? (
-                        <>
-                          <div className="font-medium text-md sm:text-lg numeric-input">{activity.code}</div>
-                          {!isExpanded && <div className="text-sm mt-1 opacity-90 truncate max-w-full numeric-input">{activity.courseTitle}</div>}
-                        </>
-                      ) : (
-                        <div className="font-medium text-md sm:text-lg ">{activity.courseTitle}</div>
-                      )}
-                    </div>
-                  ) : (
-                    <div
-                      className="mt-2 border-2 border-dashed border-white/30 rounded-lg p-6 text-center text-white/40 hover:bg-white/5"
-                      onClick={(e) => { e.stopPropagation(); openAddDialog(idx); }}
-                    >
-                      + Add Class
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {activity && isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                </div>
-              </div>
-              {activity && isExpanded && (
-                <div className="mt-3 pt-3 border-t border-white/10">
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <div><strong>Title:</strong> {activity.courseTitle}</div>
-                    {activity.faculty && activity.faculty.length > 0 && (
-                      <div><strong>Faculty:</strong> {activity.faculty.map((f) => f.name).join(', ')}</div>
-                    )}
-                    {activity.code!==null && (
-                      <div><strong>Code:</strong> {activity.code}</div>
-                    )}
-
-                  </div>
+          <div key={idx} className="sm:w-[26rem] w-[20rem]">
+            <div className="bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white max-sm:translate-x-0">
+              <div
+                className={`p-4 cursor-pointer ${isExpanded ? '' : 'min-h-[140px]'}`}
+                onClick={() => toggleExpand(idx)}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
                   
-
-                  <div className="mt-3 flex flex-col gap-2">
-                    <Button className="w-full button-normal flex items-center gap-2 justify-center" onClick={(e) => { e.stopPropagation(); openEditDialog(idx); }}>
-                      <Edit2 className="w-4 h-4" /> Edit Activity Details
-                    </Button>
-                    <Button className="w-full button-normal flex items-center gap-2 justify-center" onClick={(e) => { e.stopPropagation(); openAddDialog(idx); }}>
-                      <Plus className="w-4 h-4" /> Add Activity Option
-                    </Button>
+                    <div className="flex items-center gap-2 mb-1">
+                    <span className='absolute z-50 right-10'> <Trash2 className='w-4 h-4 mr-3 mb-2 hover:text-red-500' onClick={(e) => handleDeleteActivity(idx, e)}/> </span>
+                      <span className="font-semibold text-md sm:text-lg">Period {period.period}</span>
+                      <span className="text-xs flex items-center gap-1"><Clock className="w-3 h-3" /> {period.startTime} - {period.endTime}</span>
+                      
+                      
+                    </div>
+                    {optCount > 1 && optCount > 0 && (
+                      <div className="flex items-center gap-2 text-sm mb-2">
+                        <span className="text-white">Option {optIdx + 1} of {optCount}</span>
+                        {[...Array(optCount)].map((_, o) => (
+                          <button
+                            key={o}
+                            onClick={(e) => { e.stopPropagation(); handleOptionChange(idx, o); }}
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${o === optIdx ? 'bg-[#5d4c9d]' : 'bg-white/25'} text-white`}
+                          >{o + 1}</button>
+                        ))}
+                      </div>
+                    )}
+                    {activity ? (
+                      <div className="p-2 rounded border border-violet-400/50 backdrop-blur-sm">
+                        {activity.code!==null ? (
+                          <>
+                            <div className="font-medium text-md sm:text-lg numeric-input break-words">{activity.code}</div>
+                            {!isExpanded && <div className="text-sm mt-1 opacity-90 break-words">{activity.courseTitle}</div>}
+                          </>
+                        ) : (
+                          <div className="font-medium text-md sm:text-lg break-words">{activity.courseTitle}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        className="mt-2 border-2 border-dashed border-white/30 rounded-lg p-6 text-center text-white/40 hover:bg-white/5"
+                        onClick={(e) => { e.stopPropagation(); openAddDialog(idx); }}
+                      >
+                        + Add Class
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activity && isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </div>
                 </div>
-              )}
+                {activity && isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <div className="space-y-2 text-sm text-gray-300">
+                      <div><strong>Title:</strong> {activity.courseTitle}</div>
+                      {activity.faculty && activity.faculty.length > 0 && (
+                        <div><strong>Faculty:</strong> {activity.faculty.map((f) => f.name).join(', ')}</div>
+                      )}
+                      {activity.code!==null && (
+                        <div><strong>Code:</strong> {activity.code}</div>
+                      )}
+
+                    </div>
+                    
+
+                    <div className="mt-3 flex flex-col gap-2">
+                      <Button className="w-full button-normal flex items-center gap-2 justify-center" onClick={(e) => { e.stopPropagation(); openEditDialog(idx); }}>
+                        <Edit2 className="w-4 h-4" /> Edit Activity Details
+                      </Button>
+                      <Button className="w-full button-normal flex items-center gap-2 justify-center" onClick={(e) => { e.stopPropagation(); openAddDialog(idx); }}>
+                        <Plus className="w-4 h-4" /> Add Activity Option
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
@@ -415,7 +423,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
             </div>
           </div>
           <DialogFooter className="flex justify-between gap-35 sticky bottom-0 bg-[#141415] py-4">
-            <Button onClick={saveEditedActivity} className="w-1/4 absolute right-5 button-normal bottom-0">Save</Button>
+            <Button onClick={saveEditedActivity} className="w-1/4 absolute right-5 button-normal bottom-0 ">Save</Button>
             <DialogClose asChild>
               <Button variant="secondary" type="button" className="w-1/4 absolute left-5 button-close bottom-0">Cancel</Button>
             </DialogClose>

@@ -43,11 +43,10 @@ export default async function handler(
 
     const typedAdminDB: Firestore = adminDB;
 
-    const timetableData = {
-      day: sampleTable.day,
-      PeriodandTimings: sampleTable.PeriodandTimings,
-      'course-code': sampleTable['course-code'],
-      classRoom: sampleTable.classRoom,
+    // Create a new object by spreading sampleTable, which copies all its properties.
+    // Then, add or overwrite specific fields with data from the request or new values.
+    const timetableData: any = {
+      ...sampleTable, // This will include 'day', 'PeriodandTimings', 'course-code', 'classRoom', etc.
       email: email,
       imageUrl: imageUrl,
       department_uploaded: department,
@@ -57,6 +56,13 @@ export default async function handler(
       createdAt: new Date().toISOString(),
       hasVerified: false
     };
+
+    // Remove properties from the original sampleTable that we don't need
+    // in the 'TimeTable' collection to keep our data clean.
+    delete timetableData.dept;
+    delete timetableData.semesterType;
+    delete timetableData.class;
+    delete timetableData.classAdvisor;
 
     try {
       // First try to get the existing document using class details

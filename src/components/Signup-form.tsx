@@ -75,7 +75,7 @@ export function SignupForm() {
 
   return (
     <div>
-      <Card className="sm:w-[50vw] w-[90vw] max-w-sm card-bg sm:p-15 pl-10 pr-10 border-none shadow-indigo-500 shadow-lg relative overflow-hidden">
+      <Card className="sm:w-[50vw] w-[90vw] max-w-sm card-bg sm:p-8 pl-10 pr-10 border-none shadow-indigo-500 shadow-lg relative overflow-hidden">
         <CardHeader className="flex flex-col gap-2">
           <CardTitle className='text-card-text sm:text-xl'>Sign Up</CardTitle>
           <CardDescription className='mt-2 sm:text-md'>
