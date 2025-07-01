@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { NavBarDemo } from '@/components/Navbar';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,7 +39,6 @@ export default function Dashboard() {
     <div>
       <div className="sm:hidden">
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
-          <NavBarDemo />
 
           <CurrentTimeTable />
         </div>

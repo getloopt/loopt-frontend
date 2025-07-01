@@ -268,7 +268,6 @@ const AboutPage = () => {
   return (
     <div>
       <div className="sm:hidden">
-        <NavBarDemo />
         <AboutContent />
       </div>
       <div className="hidden sm:block">

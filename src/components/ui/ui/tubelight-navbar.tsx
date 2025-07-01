@@ -40,11 +40,11 @@ export function NavBar({ items, className }: NavBarProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-0 sm:top-0 w-full sm:w-auto sm:left-1/2 sm:-translate-x-1/2 z-50 mb-6 sm:pt-6 ",
+        "fixed bottom-0 sm:bottom-auto sm:top-0 w-full sm:w-auto sm:left-1/2 sm:-translate-x-1/2 z-50 mb-6 sm:pt-6",
         className,
       )}
     >
-      <div className="absolute -bottom-7 flex items-center justify-around sm:justify-center sm:gap-3 w-full h-20 bg-[#231F3A]/50 border border-border backdrop-blur-lg py-1 sm:px-1 sm:rounded-full shadow-lg">
+      <div className="absolute -bottom-8 sm:-bottom-7 flex items-center justify-around sm:justify-center sm:gap-3 w-full h-20 bg-[#231F3A]/50 border border-border backdrop-blur-lg py-1 sm:px-1 sm:rounded-full shadow-lg">
         {items.map((item) => {
           const isActive = item.url === router.pathname
 

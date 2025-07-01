@@ -1,5 +1,4 @@
-// import FormTimetable from '../components/edit-timetableslider/Form-timetable';
-import { NavBarDemo } from '@/components/Navbar';
+// import FormTimetable from '../components/edit-timetableslider/Form-timetable';import { NavBarDemo } from '@/components/Navbar';
 import Layout from '@/components/Layout';
 import EditWeekSchedule from '@/components/edit-timetableslider/EditWeekSchedule';
 import { SidebarProvider, SidebarTrigger, Sidebar } from '@/components/ui/ui/sidebar';
@@ -17,10 +16,6 @@ const TimetablePage = () => {
   return (
     <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
       <div className="relative">
-        {/* Mobile View - Only NavBar */}
-        <div className="block sm:hidden">
-          <NavBarDemo />
-        </div>
 
         {/* Desktop View - Layout with Sidebar */}
         <div className="hidden lg:block">

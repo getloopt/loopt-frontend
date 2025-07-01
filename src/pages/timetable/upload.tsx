@@ -13,10 +13,7 @@ export default function UploadPage() {
   return (
     <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
     <div className="relative">
-      {/* Mobile View - Only NavBar */}
-      <div className="block sm:hidden">
-        <NavBarDemo />
-      </div>
+
 
       {/* Desktop View - Layout with Sidebar */}
       <div className="hidden lg:block">

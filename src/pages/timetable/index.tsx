@@ -1,5 +1,4 @@
 import React from "react";
-import { NavBarDemo } from '@/components/Navbar';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
 import { Button } from "@/components/ui/ui/button";
@@ -21,9 +20,6 @@ export default function TimetableDashboard() {
     <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
       <div className="relative">
         {/* Mobile View - Only NavBar */}
-        <div className="block sm:hidden">
-          <NavBarDemo />
-        </div>
 
         {/* Desktop View - Layout with Sidebar */}
         <div className="hidden lg:block">

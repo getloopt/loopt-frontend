@@ -3,11 +3,11 @@ import { Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { Progress } from "@/components/ui/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
-import { db } from '../../../firebase-config';
 import { useAuth, UserData } from '@/contexts/AuthContext';
 import OptionCarousel from '../optioncarousel';
 import { type CarouselApi } from "@/components/ui/ui/carousel"
+import { useTimetable } from "@/contexts/timetableData";
+
 
 // --- Type definitions ---
 interface Activity {
@@ -85,10 +85,8 @@ const parseTime = (timeStr: string): Date => {
 
 // --- Main Component ---
 const CurrentTimeTable = () => {
-  const { user, userData } = useAuth();
-  const [timetableData, setTimetableData] = useState<TimeTableDoc | null>(null);
-  const [timetableVisibility, setTimetableVisibility] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { userData } = useAuth();
+  const { timetable, loading: timetableLoading } = useTimetable();
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [periods, setPeriods] = useState<Period[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -102,6 +100,14 @@ const CurrentTimeTable = () => {
 
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
   const isToday = selectedDay === todayName;
+
+  // Determine whether the timetable should be shown (verified or admin)
+  const timetableVisibility = React.useMemo(() => {
+    if (!timetable) return false;
+    const isVerified = timetable.hasVerified === true;
+    const isAdmin = userData?.CanUploadEdit === true;
+    return isVerified || isAdmin;
+  }, [timetable, userData]);
 
   useEffect(() => {
     if (!api) {
@@ -155,68 +161,12 @@ const CurrentTimeTable = () => {
     };
   }, [currentPeriodIndex, periods, currentTime]);
 
-  // Effect to fetch timetable and set current day logic
-  useEffect(() => {
-    const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-    //setSelectedDay(todayName); // This is now handled by the carousel's useEffect
-
-    if (!user?.email || !userData) {
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onSnapshot(
-      query(collection(db, 'TimeTable'),
-        where('department_uploaded', '==', userData.department),
-        where('year_uploaded', '==', userData.year),
-        where('section_uploaded', '==', userData.section),
-        where('semester_uploaded', '==', userData.semester)
-      ),
-      (snapshot) => {
-        if (snapshot.empty) {
-          setTimetableData(null);
-          setTimetableVisibility(false);
-          setLoading(false);
-          return;
-        }
-
-        const timetableDoc = snapshot.docs[0];
-        const timetable = timetableDoc.data() as TimeTableDoc;
-
-        const isVerified = timetable.hasVerified === true;
-        const isAdmin = userData.CanUploadEdit === true;
-
-        if (isVerified || isAdmin) {
-          setTimetableData(timetable);
-          setTimetableVisibility(true);
-        } else {
-          setTimetableData(null);
-          setTimetableVisibility(false);
-        }
-        setLoading(false);
-      },
-      (error) => {
-        console.error('Error fetching timetable:', error);
-        setTimetableData(null);
-        setTimetableVisibility(false);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user, userData]);
-
-  // Set up timer to update current time every minute
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
   // Effect to update periods when day or data changes
   useEffect(() => {
-    if (timetableData && selectedDay && timetableData.day[selectedDay]) {
-      const dayData = timetableData.day[selectedDay];
-      const fullPeriods = timetableData.PeriodandTimings.map(pt => {
+    if (timetable && selectedDay && timetable.day[selectedDay]) {
+      // Cast because timetable coming from context has 'any' for day entries
+      const dayData = timetable.day[selectedDay] as Period[];
+      const fullPeriods = timetable.PeriodandTimings.map(pt => {
         const found = dayData.find(p => p.period === pt.period);
         if (found) return found;
         const [startTime, endTime] = pt.timing.split(' - ');
@@ -232,7 +182,7 @@ const CurrentTimeTable = () => {
     } else {
       setPeriods([]);
     }
-  }, [selectedDay, timetableData]);
+  }, [selectedDay, timetable]);
 
   // Utility callback to calculate progress; memoized to keep stable reference
   const calculateProgress = React.useCallback(() => {
@@ -344,11 +294,17 @@ const CurrentTimeTable = () => {
     setSelectedOption(prev => ({ ...prev, [periodIdx]: optIdx }));
   };
 
-  if (loading) {
+  // Update currentTime every minute so progress bar and current period stay accurate
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (timetableLoading) {
     return <div className='text-white'>Loading timetable...</div>;
   }
 
-  if (!timetableVisibility || !timetableData) {
+  if (!timetableVisibility || !timetable) {
     return (
       <div className="w-full max-w-5xl mx-auto p-4 text-center">
         {userData?.CanUploadEdit===true && (
@@ -368,7 +324,7 @@ const CurrentTimeTable = () => {
   }
 
 
-  if (!timetableData && (selectedDay !== 'Saturday' && selectedDay !== 'Sunday')) {
+  if (!timetable && (selectedDay !== 'Saturday' && selectedDay !== 'Sunday')) {
     return <div className='text-white'>Loading timetable... Make sure you have uploaded one.</div>;
   }
 

@@ -12,6 +12,7 @@ import { auth, db } from '../../firebase-config'
 import { FirebaseError } from 'firebase/app';
 import { useRouter } from 'next/router';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { toast } from "sonner"
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({
@@ -23,53 +24,80 @@ export function SignupForm() {
   
   const handleButtonClick = async () => {
     try {
+      // Step 1: Get Google Auth Result
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      if (user.email && user.email.endsWith("@cse.ssn.edu.in")) {
-        console.log("Signed in as:", user.email);
-        
-        // Check if user exists in Firestore
-        const usersCollection = collection(db, "users");
-        const userQuery = query(usersCollection, where("email", "==", user.email));
+      // Step 2: Validate Email - Exit early if invalid
+      if (!user.email) {
+        toast.error("No email provided with this Google account");
+        await signOut(auth);
+        return; // Exit before any Firestore operations
+      }
+
+      // Step 3: Check Email Domain - Exit early if not SSN
+      if (!user.email.endsWith("@cse.ssn.edu.in")) {
+        toast.error("Please use your SSN email to sign in", {
+          description: "Only @cse.ssn.edu.in email addresses are allowed"
+        });
+        await signOut(auth);
+        return; // Exit before any Firestore operations
+      }
+
+      // Step 4: Only reach here if email is valid SSN email
+      const usersCollection = collection(db, "users");
+      const userQuery = query(usersCollection, where("email", "==", user.email));
+      
+      try {
         const querySnapshot = await getDocs(userQuery);
-        
         if (querySnapshot.empty) {
-          // User doesn't exist in Firestore - redirect to onboarding
           router.push('/onboarding');
         } else {
-          // User exists in Firestore - redirect to dashboard
           router.push('/dashboard');
         }
-      } else {
-        console.log("User email does not end with @cse.ssn.edu.in");
-        alert("Please use your SSN email to sign in.");
+      } catch (firestoreError) {
+        console.error("Firestore error:", firestoreError);
+        toast.error("Unable to complete sign in", {
+          description: "Please try again"
+        });
         await signOut(auth);
-        console.log("Signed out user with email:", user.email);
       }
+
     } catch (error) {
       if (error instanceof FirebaseError) {
         switch (error.code) {
           case "auth/popup-closed-by-user":
           case "auth/cancelled-popup-request":
-            console.log("Sign-in popup was closed by the user or cancelled.");
-            return;
+            return; // Silent return - user initiated
           case "auth/popup-blocked":
-            console.log("Popup was blocked by the browser.");
-            alert("Popup was blocked! Please allow popups for this site and try again.");
+            toast.error("Popup Blocked", {
+              description: "Please allow popups for this site and try again"
+            });
             return;
-          case "auth/network-request-failed":
-            console.log("Network error occurred during sign-in.");
-            alert("Network error. Please check your internet connection and try again.");
+          case "auth/account-exists-with-different-credential":
+            toast.error("Account Already Exists", {
+              description: "This email is already associated with another sign-in method"
+            });
+            return;
+          case "auth/invalid-credential":
+            toast.error("Invalid Credentials", {
+              description: "Please try signing in again"
+            });
             return;
           default:
-            console.error("Google sign-in error:", error);
-            alert("Sign-in failed. Please try again.");
+            console.error("Auth error:", error.code, error.message);
+            toast.error("Sign-in Failed", {
+              description: "Please try again later"
+            });
             return;
         }
       }
-      console.error("Google sign-in error:", error);
-      alert("Sign-in failed. Please try again.");
+      
+      // Unknown error
+      console.error("Unexpected error:", error);
+      toast.error("Sign-in Failed", {
+        description: "An unexpected error occurred"
+      });
     }
   };
 
