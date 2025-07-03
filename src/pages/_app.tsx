@@ -7,6 +7,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { NavBarDemo } from '@/components/Navbar';
 import { TimetableProvider } from "@/contexts/timetableData";
+import { AnimatePresence } from 'framer-motion';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +24,9 @@ export default function App({ Component, pageProps }: AppProps) {
         </Head>
         <main className={inter.className}>
           {!hideNav && <NavBarDemo />}
-          <Component {...pageProps} />
+          <AnimatePresence mode="wait" initial={false}>
+            <Component {...pageProps} key={router.asPath} />
+          </AnimatePresence>
           <Toaster />
         </main>
       </TimetableProvider>

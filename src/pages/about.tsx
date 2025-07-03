@@ -1,6 +1,7 @@
 "use client"
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { motion } from 'framer-motion'
 import { db } from '../../firebase-config'
 import { collection, deleteDoc, doc, getDocs, query, updateDoc, where } from 'firebase/firestore'
 import { Label } from '@/components/ui/ui/label'
@@ -26,7 +27,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/ui/dropdown-menu"
-import { NavBarDemo } from '@/components/Navbar'
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -128,12 +128,8 @@ const AboutPage = () => {
     }
   }
 
-  if (loading || !isMounted) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg text-white font-proxima-nova">Loading...</div>
-      </div>
-    );
+  if (!isMounted) {
+    return null;
   }
 
   if (!isAuthenticated || !localData) {
@@ -166,10 +162,6 @@ const AboutPage = () => {
               <p className="mt-4 font-proxima-nova text-neutral-50">You can check your details here</p>
             </div>
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="email" className="text-white font-proxima-nova font-bold">Email</Label>
-              <Input type="text" id="email" value={user?.email || ""} disabled className="bg-zinc-800 mt-2 p-6 text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80" />
-            </div>
-            <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="department" className="text-white font-proxima-nova font-bold">Department</Label>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -198,7 +190,7 @@ const AboutPage = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="max-sm:w-[90vw] sm:w-[55vw] bg-zinc-800 border-none gap-2 pt-2">
                   {years.map((y) => (
-                    <DropdownMenuItem className="cursor-pointer text-white sm:text-lg hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova" key={y} onClick={() => setLocalData({...localData, year: y})}>
+                    <DropdownMenuItem className="cursor-pointer text-white sm:text-lg hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm font-proxima-nova numeric-input" key={y} onClick={() => setLocalData({...localData, year: y})}>
                       Year {y}
                     </DropdownMenuItem>
                   ))}
@@ -266,16 +258,44 @@ const AboutPage = () => {
   );
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{
+        duration: 0.4,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
+    >
       <div className="sm:hidden">
-        <AboutContent />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{
+            duration: 0.3,
+            delay: 0.1,
+            ease: "easeOut"
+          }}
+        >
+          <AboutContent />
+        </motion.div>
       </div>
       <div className="hidden sm:block">
         <Layout>
-          <AboutContent />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              duration: 0.3,
+              delay: 0.1,
+              ease: "easeOut"
+            }}
+          >
+            <AboutContent />
+          </motion.div>
         </Layout>
       </div>
-    </div>
+    </motion.div>
   )
 }
 

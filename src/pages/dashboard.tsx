@@ -1,33 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import CurrentTimeTable from '@/components/correct-timetable/CurrentTimeTable';
 
+
 export default function Dashboard() {
   const router = useRouter();
-  const { user, userData, loading, isAuthenticated, logout } = useAuth();
-  const [isMounted, setIsMounted] = useState(false);
+  const { user, userData, loading, isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
+  // runs before first paint
+  useLayoutEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
+    // Only redirect if we're not loading and not authenticated
     if (!loading && !isAuthenticated) {
       router.push('/signup');
     }
   }, [loading, isAuthenticated, router]);
-  
 
-  // Show loading state
-  if (loading || !isMounted) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
-    );
+  // Only show loading on initial mount, not during route changes
+  if (!mounted) {
+    return null;
   }
 
   // Don't render if not authenticated
@@ -36,25 +34,48 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{
+        duration: 0.4,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
+    >
       <div className="sm:hidden">
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
-
+        <motion.div 
+          className="flex flex-col items-center justify-center min-h-screen p-4"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{
+            duration: 0.3,
+            delay: 0.1,
+            ease: "easeOut"
+          }}
+        >
           <CurrentTimeTable />
-        </div>
+        </motion.div>
       </div>
 
       <div className="hidden sm:block ml-4">
         <Layout>
-          <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        
+          <motion.div 
+            className="flex flex-col items-center justify-center min-h-screen p-4"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              duration: 0.3,
+              delay: 0.1,
+              ease: "easeOut"
+            }}
+          >
             <div className="max-md:translate-x-17 lg:translate-x-30 xl:translate-x-50">
-            <CurrentTimeTable />
+              <CurrentTimeTable />
             </div>
-          
-          </div>
+          </motion.div>
         </Layout>
       </div>
-    </div>
+    </motion.div>
   );
 }
