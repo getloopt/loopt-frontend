@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Edit2, Plus, X, Trash2 } from 'lucide-react';
-import { IoMdArrowDropdown } from "react-icons/io";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/ui/dialog"
 import { Input } from "@/components/ui/ui/input"
 import { Label } from "@/components/ui/ui/label"
@@ -304,7 +303,7 @@ const FormTimetable = () => {
                                                         <span>Program Elective</span>
                                                     </div>)
                                                 }
-                                                <IoMdArrowDropdown />
+                                                <ChevronDown className='w-5 h-5' />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent className="w-[90vw] h-[40vh] sm:w-[40vw] bg-[#141415] border-1 border-white/10">
@@ -419,7 +418,7 @@ const FormTimetable = () => {
                                                         <span>Program Elective</span>
                                                     </div>)
                                                 }
-                                                <IoMdArrowDropdown />
+                                                <ChevronDown className='w-5 h-5' />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent className="w-[90vw] h-[15vh] sm:w-[30vw] sm:h-[15vh] bg-[#141415] border-1 border-white/10">

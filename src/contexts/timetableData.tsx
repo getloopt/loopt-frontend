@@ -29,46 +29,66 @@ export function useTimetable() {
 
 /* 2.  Provider */
 export function TimetableProvider({ children }: { children: React.ReactNode }) {
-  const { userData, user } = useAuth();      // you already have this
+  const { userData, user } = useAuth();
   const [timetable, setTimetable] = useState<TimeTableDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+    let unsubscribe: (() => void) | undefined;
+
     if (!userData || !user?.email) {
       setLoading(false);
       return;
     }
 
+    setLoading(true);
+    setError(null);
+
     const q = query(
       collection(db, "TimeTable"),
       where("department_uploaded", "==", userData.department),
-      where("year_uploaded",       "==", userData.year),
-      where("section_uploaded",    "==", userData.section),
-      where("semester_uploaded",   "==", userData.semester),
+      where("year_uploaded", "==", userData.year),
+      where("section_uploaded", "==", userData.section),
+      where("semester_uploaded", "==", userData.semester),
     );
 
-    const unsub = onSnapshot(
+    unsubscribe = onSnapshot(
       q,
       snap => {
+        if (!mounted) return;
+        
         if (snap.empty) {
           setTimetable(null);
         } else {
-          setTimetable(snap.docs[0].data() as TimeTableDoc);
+          const timetableData = snap.docs[0].data() as TimeTableDoc;
+          setTimetable(timetableData);
         }
         setLoading(false);
       },
       err => {
+        if (!mounted) return;
         console.error(err);
         setError(err.message);
         setLoading(false);
       },
     );
 
-    return () => unsub();        // tidy up when user logs out
+    return () => {
+      mounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [userData, user]);
 
-  const value: TimetableContextValue = { timetable, loading, error };
+  const value: TimetableContextValue = { 
+    timetable, 
+    loading, 
+    error 
+  };
+  
   return (
     <TimetableContext.Provider value={value}>
       {children}

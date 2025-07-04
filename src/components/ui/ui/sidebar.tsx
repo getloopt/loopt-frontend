@@ -6,8 +6,8 @@ import { Menu } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/ui/button2"
-import { Input } from "@/components/ui/ui/input2"
+import { Button } from "@/components/ui/ui/button"
+import { Input } from "@/components/ui/ui/input"
 import { Separator } from "@/components/ui/ui/separator"
 import {
   Sheet,

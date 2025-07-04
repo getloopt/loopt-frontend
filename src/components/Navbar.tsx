@@ -22,5 +22,9 @@ export function NavBarDemo() {
 
   // Since we only have Home and Profile, no need to check auth loading
 
-  return <NavBar items={navItems} />;
+  return (
+    <div className='sm:hidden'>
+      <NavBar items={navItems} />
+    </div>
+  );
 }

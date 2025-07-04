@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!querySnapshot.empty) {
         const data = querySnapshot.docs[0].data();
-        return {
+        const userData = {
           email,
           department: data.department,
           year: data.year,
@@ -69,8 +69,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           CanUploadEdit: data.CanUploadEdit,
           hasVerified: data.hasVerified,
         };
+        
+        return userData;
+      } else {
+        return null;
       }
-      return null;
     } catch (error) {
       console.error("Error fetching user data:", error);
       return null;
@@ -96,12 +99,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!mounted) return;
+
       if (!firebaseUser) {
         // User is not authenticated
         setUser(null);
         setUserData(null);
-        if (initializing) {
+        
+        if (initializing && mounted) {
           const currentPath = router.pathname;
           if (currentPath !== '/signup' && currentPath !== '/') {
             router.push('/signup');
@@ -115,43 +123,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // User is authenticated
       setUser(firebaseUser);
       
-      if (!firebaseUser.email) {
-        // No email provided
-        toast.error("No email provided with this account");
-        await logout();
-        return;
-      }
-
-      if (!firebaseUser.email.endsWith("@cse.ssn.edu.in")) {
-        // Not an SSN email
-        toast.error("Please use your SSN email to sign in", {
-          description: "Only @cse.ssn.edu.in email addresses are allowed"
-        });
-        await logout();
-        return;
-      }
-
-      // Only fetch data for SSN emails
-      const data = await fetchUserData(firebaseUser.email);
-      setUserData(data);
-      
-      // Handle routing on initial load
-      if (initializing) {
-        const currentPath = router.pathname;
+      try {
+        const data = await fetchUserData(firebaseUser.email!);
         
-        // Don't redirect if user is already on a protected page
-        if (currentPath === '/dashboard' || currentPath === '/about') {
-          setLoading(false);
-          setInitializing(false);
-          return;
+        if (data) {
+          setUserData(data);
+          
+          // Check if user has verified their email
+          // TODO: Add proper email verification logic
+          // if (!data.hasVerified) {
+          //   toast.error("Please verify your email address first!");
+          //   await auth.signOut();
+          //   setUser(null);
+          //   setUserData(null);
+          //   router.push('/signup');
+          //   return;
+          // }
+          
+          // Redirect based on user verification status
+          if (initializing && mounted) {
+            const currentPath = router.pathname;
+            if (currentPath === '/signup' || currentPath === '/') {
+              router.push('/dashboard');
+            }
+          }
+        } else {
+          // User not found in database
+          setUser(null);
+          setUserData(null);
+          if (initializing && mounted) {
+            router.push('/signup');
+          }
         }
-        
-        if (!data && currentPath !== '/onboarding') {
-          // User exists in Firebase Auth but not in Firestore
-          router.push('/onboarding');
-        } else if (data && (currentPath === '/' || currentPath === '/signup')) {
-          // User exists in both and is on home/signup
-          router.push('/dashboard');
+      } catch (error) {
+        console.error("Error in auth state change:", error);
+        setUser(null);
+        setUserData(null);
+        if (initializing && mounted) {
+          router.push('/signup');
         }
       }
       
@@ -159,7 +168,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setInitializing(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [router, initializing]);
 
   const value: AuthContextType = {

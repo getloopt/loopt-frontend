@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/ui/dropdown-menu"
-import { IoMdArrowDropdown } from "react-icons/io";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface Contact2Props {
@@ -115,7 +115,7 @@ export const Contact2 = (props: Contact2Props) => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
                       {department ? departments.find(d => d.value === department)?.label : "Select Department"}
-                      <IoMdArrowDropdown />
+                      <ChevronDown className='w-5 h-5' />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full sm:w-[600px] bg-zinc-800 border-none gap-2 pt-2">
@@ -139,7 +139,7 @@ export const Contact2 = (props: Contact2Props) => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
                       {year || "Select Year"}
-                      <IoMdArrowDropdown />
+                      <ChevronDown className='w-5 h-5' />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full sm:w-[600px] bg-zinc-800 border-none gap-2 pt-2">
@@ -176,7 +176,7 @@ export const Contact2 = (props: Contact2Props) => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
                       {semester || "Select Semester"}
-                      <IoMdArrowDropdown />
+                      <ChevronDown className='w-5 h-5' />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-full sm:w-[600px] bg-zinc-800 border-none gap-2 pt-2">

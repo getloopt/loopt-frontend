@@ -472,8 +472,26 @@ const CurrentTimeTable = () => {
 
   // Time update
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    // Add page visibility change listener
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearInterval(timer);
+      } else {
+        // Restart timer when page becomes visible
+        setCurrentTime(new Date());
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Early returns for loading states
@@ -560,6 +578,103 @@ const CurrentTimeTable = () => {
                             style={{ 
                               left: '35%',
                               bottom: '70%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1 h-1 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '35%',
+                              bottom: '70%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1 h-1 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '35%',
+                              bottom: '70%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1 h-1 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '35%',
+                              bottom: '70%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                    
+                          />
+                          <motion.div 
+                            className="absolute w-2 h-2 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '20%',
+                              bottom: '50%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-2 h-2 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '20%',
+                              top: '20%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-2 h-2 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '10%',
+                              top: '2%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1 h-1 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '5%',
+                              top: '1%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1.5 h-1.5 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '20%',
+                              top: '13%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1.5 h-1.5 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '20%',
+                              top: '25%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1.5 h-1.5 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '20%',
+                              bottom: '25%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1.5 h-1.5 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '30%',
+                              bottom: '2%',
+                              animation: 'float 2.1s ease-in-out infinite 1.5s'
+                            }}
+                          />
+                          <motion.div 
+                            className="absolute w-1.5 h-1.5 bg-white/50 rounded-full shadow-sm"
+                            style={{ 
+                              left: '30%',
+                              bottom: '40%',
                               animation: 'float 2.1s ease-in-out infinite 1.5s'
                             }}
                           />

@@ -6,9 +6,9 @@ import { db } from '../../firebase-config'
 import { collection, deleteDoc, doc, getDocs, query, updateDoc, where } from 'firebase/firestore'
 import { Label } from '@/components/ui/ui/label'
 import { Input } from '@/components/ui/ui/input'
-import { Button } from '@/components/ui/ui/button'
-import { IoMdArrowDropdown } from "react-icons/io";
-import { PiWarningCircleLight } from "react-icons/pi";
+  import { Button } from '@/components/ui/ui/button'
+import { ChevronDown, AlertCircle } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -167,8 +167,8 @@ const AboutPage = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
                     {localData?.department ? departments.find(d => d.value === getDepartmentValue(localData.department))?.label : "Select Department"}
-                    <IoMdArrowDropdown />
-                  </Button>
+                      <ChevronDown className='w-5 h-5' />
+                    </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="max-sm:w-[90vw] sm:w-[55vw] bg-zinc-800 border-none gap-2 pt-2">
                   {departments.map((dept) => (
@@ -185,7 +185,7 @@ const AboutPage = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
                     {localData?.year ? `Year ${fromRoman(localData.year)}` : "Select Year"}
-                    <IoMdArrowDropdown />
+                    <ChevronDown className='w-5 h-5' />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="max-sm:w-[90vw] sm:w-[55vw] bg-zinc-800 border-none gap-2 pt-2">
@@ -207,7 +207,7 @@ const AboutPage = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full mt-2 justify-between border-white/20 border-1 bg-zinc-800 p-6 hover:bg-zinc-800 hover:text-none cursor-pointer font-proxima-nova pl-7">
                     {localData?.semester ? semesters.find(s => s.value === fromRoman(localData.semester))?.label : "Select Semester"}
-                    <IoMdArrowDropdown />
+                    <ChevronDown className='w-5 h-5' />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="max-sm:w-[90vw] sm:w-[55vw] bg-zinc-800 border-none gap-2 pt-2">
@@ -239,7 +239,7 @@ const AboutPage = () => {
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-zinc-900 border-white/20 sm:max-w-[425px] max-w-[85%] w-full">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white font-proxima-nova text-lg">Confirm Deletion <PiWarningCircleLight className="text-red-500 inline-block ml-1 h-5 w-5" /></AlertDialogTitle>
+                    <AlertDialogTitle className="text-white font-proxima-nova text-lg">Confirm Deletion <AlertCircle className="text-red-500 inline-block ml-1 h-5 w-5" /></AlertDialogTitle>
                     <AlertDialogDescription className="text-white font-proxima-nova text-sm">This action is irreversible and will delete your account permanently.</AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="sm:space-x-2">
