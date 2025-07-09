@@ -17,6 +17,7 @@ import { WandSparkles } from "lucide-react"
 import { GradientButton } from "./ui/gradient-button"
 import { useRouter } from 'next/router'
 import { fetchWithNgrok } from "@/lib/utils"
+import { getApiUrl } from "@/lib/config"
 
 
 
@@ -59,7 +60,7 @@ export function ImageUploadDemo() {
         return;
     }
     try {
-      const response = await fetchWithNgrok('/api/mistralbackend', {
+      const response = await fetchWithNgrok(getApiUrl('mistralBackend'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,7 +185,7 @@ export function ImageUploadDemo() {
 
     try {
       // 1. Get pre-signed URL from our API route
-      const presignResponse = await fetchWithNgrok('/api/upload-url', {
+      const presignResponse = await fetchWithNgrok(getApiUrl('uploadUrl'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

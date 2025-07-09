@@ -2,6 +2,7 @@ import React from 'react';
 import { BellIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { auth } from '../../../../firebase-config';
+import { getApiUrl } from '@/lib/config';
 
 // Helper function to convert base64 string to Uint8Array
 const urlB64ToUint8Array = (base64String: string): Uint8Array => {
@@ -51,7 +52,7 @@ export const NotificationSettings = () => {
       const subscriptionData = JSON.parse(JSON.stringify(subscription));
       console.log('Data being saved via API:', subscriptionData);
       
-      const response = await fetch('/api/manage-subscription', {
+      const response = await fetch(getApiUrl('manageSubscription'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

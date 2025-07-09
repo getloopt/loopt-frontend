@@ -10,6 +10,7 @@ import { useTimetable } from "@/contexts/timetableData";
 import { useNetworkStatus } from '@/hooks/use-network-status';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/config';
 
 // --- Type definitions ---
 interface Activity {
@@ -592,7 +593,7 @@ const CurrentTimeTable = () => {
       console.log('📅 Scheduling notifications on server for user:', userDataWithId.uid);
       
       // Send periods to server for scheduling
-      const response = await fetch('/api/schedule-notifications', {
+      const response = await fetch(getApiUrl('scheduleNotifications'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -684,7 +685,7 @@ const CurrentTimeTable = () => {
       }
 
       // Send test periods to server for scheduling
-      const response = await fetch('/api/schedule-notifications', {
+      const response = await fetch(getApiUrl('scheduleNotifications'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

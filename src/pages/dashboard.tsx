@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import CurrentTimeTable from '@/components/correct-timetable/CurrentTimeTable';
 import { NotificationSettings } from '@/components/ui/ui/notifications';
 import { toast } from 'sonner';
+import { getApiUrl } from '@/lib/config';
 
 
 // Emergency fallback component for mobile
@@ -148,7 +149,7 @@ export default function Dashboard() {
       }
 
       // Call API route instead of server action directly
-      const response = await fetch('/api/send-notification', {
+      const response = await fetch(getApiUrl('sendNotification'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
