@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { WandSparkles } from "lucide-react"
 import { GradientButton } from "./ui/gradient-button"
 import { useRouter } from 'next/router'
+import { fetchWithNgrok } from "@/lib/utils"
 
 
 
@@ -58,7 +59,7 @@ export function ImageUploadDemo() {
         return;
     }
     try {
-      const response = await fetch('/api/mistralbackend', {
+      const response = await fetchWithNgrok('/api/mistralbackend', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -183,7 +184,7 @@ export function ImageUploadDemo() {
 
     try {
       // 1. Get pre-signed URL from our API route
-      const presignResponse = await fetch('/api/upload-url', {
+      const presignResponse = await fetchWithNgrok('/api/upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -204,7 +205,7 @@ export function ImageUploadDemo() {
       setPublicImageUrl(publicUrl);
 
       // 2. Upload file to R2 using the pre-signed URL
-      const uploadResponse = await fetch(uploadUrl, {
+      const uploadResponse = await fetchWithNgrok(uploadUrl, {
         method: 'PUT',
         body: uploadedFile,
         headers: { 'Content-Type': uploadedFile.type },

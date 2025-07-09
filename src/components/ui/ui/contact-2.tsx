@@ -4,7 +4,7 @@ import { app, db } from '../../../../firebase-config'
 import { Button } from "@/components/ui/ui/button";
 import { Input } from "@/components/ui/ui/input";
 import { Label } from "@/components/ui/ui/label";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import dashboard from "@/pages/dashboard";
 import {
@@ -74,24 +74,59 @@ export const Contact2 = (props: Contact2Props) => {
     const yearRoman = toRoman(year);
     const semesterRoman = toRoman(semester);
 
-    if(departmentLabel && yearRoman && section && semesterRoman){
-      const docRef = await addDoc(collection(db, "users"), {
-        uid: auth.currentUser?.uid,
-        email: auth.currentUser?.email,
-        department: departmentLabel,
-        year: yearRoman,
-        section: section,
-        semester: semesterRoman,
-        CanUploadEdit:false
-      });
-      if(docRef){
-        toast.success("Details submitted successfully")
-        router.push('/dashboard')
-      }
-    }
-    else{
+    if(!departmentLabel || !yearRoman || !section || !semesterRoman){
       toast.error("Please fill all the details")
-    } 
+      return;
+    }
+
+    // Create user data object
+    const userData = {
+      uid: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      department: departmentLabel,
+      year: yearRoman,
+      section: section,
+      semester: semesterRoman,
+      CanUploadEdit: false,
+      hasVerified: false,
+      createdAt: new Date().toISOString()
+    };
+
+    // ✅ STEP 1: Save to localStorage immediately
+    try {
+      if (auth.currentUser?.uid) {
+        localStorage.setItem(auth.currentUser.uid, JSON.stringify(userData));
+        console.log('🔍 UserData:', userData);
+        console.log('✅ User data saved to localStorage with key:', auth.currentUser.uid);
+        console.log('✅ User data content:', userData);
+      } else {
+        console.error('❌ No currentUser.uid available for localStorage');
+      }
+    } catch (error) {
+      console.error('❌ Error saving to localStorage:', error);
+    }
+
+    // ✅ STEP 2: Save to Firestore
+    try {
+      const docRef = await addDoc(collection(db, "users"), userData);
+      if (docRef) {
+        console.log('✅ User data saved to Firestore with ID:', docRef.id);
+        toast.success("Details submitted successfully")
+        
+        // Add a small delay to ensure data is saved before redirect
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('❌ Error saving to Firestore:', error);
+      toast.success("Details saved locally - will sync when online")
+      
+      // Still redirect after local save
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 1000);
+    }
   };
 
   return (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, memo, useLayoutEffect } from 'react';
-import { Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, ChevronDown, ChevronUp, Cloud, CloudOff, RefreshCw, Bell } from 'lucide-react';
 import { Progress } from "@/components/ui/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/ui/tooltip";
 import { cn } from '@/lib/utils';
@@ -7,7 +7,9 @@ import { useAuth, UserData } from '@/contexts/AuthContext';
 import OptionCarousel from '../optioncarousel';
 import { type CarouselApi } from "@/components/ui/ui/carousel"
 import { useTimetable } from "@/contexts/timetableData";
+import { useNetworkStatus } from '@/hooks/use-network-status';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 // --- Type definitions ---
 interface Activity {
@@ -33,6 +35,7 @@ interface TimetableData {
 interface UserDataWithVerification extends UserData {
   hasVerified?: boolean;
   CanUploadEdit?: boolean;
+  uid?: string;
 }
 
 interface TimeTableDoc {
@@ -234,17 +237,21 @@ const PeriodCard = memo(({
 
 PeriodCard.displayName = 'PeriodCard';
 
+
+
 // --- Main Component ---
 const CurrentTimeTable = () => {
   const { userData } = useAuth();
-  const { timetable, loading: timetableLoading } = useTimetable();
+  const { timetable, loading: timetableLoading, error } = useTimetable();
+  const isOnline = useNetworkStatus();
   
-  // Pre-computed values
-  const todayName = useMemo(() => 
+  // Pre-computed values - Force current day to be Friday for testing
+  const actualTodayName = useMemo(() => 
     new Date().toLocaleDateString('en-US', { weekday: 'long' }), []
   );
   
-  const [selectedDay, setSelectedDay] = useState<string>(todayName);
+  const todayName = useMemo(() => 'Friday', []);
+  const [selectedDay, setSelectedDay] = useState<string>('Friday');
   const [periods, setPeriods] = useState<Period[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [progress, setProgress] = useState(0);
@@ -256,6 +263,10 @@ const CurrentTimeTable = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const hasAutoScrolledRef = useRef(false);
   const [isAnimationsReady, setIsAnimationsReady] = useState(false);
+
+  // Add notification scheduling state
+  const [scheduledNotifications, setScheduledNotifications] = useState<NodeJS.Timeout[]>([]);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   const isToday = selectedDay === todayName;
 
@@ -269,20 +280,65 @@ const CurrentTimeTable = () => {
 
   // Pre-computed periods data with memoization
   const computedPeriods = useMemo(() => {
-    if (!timetable || !selectedDay || !timetable.day[selectedDay]) {
+    console.log('🔍 Computing periods for day:', selectedDay);
+    console.log('🔍 Timetable data:', timetable);
+    
+        // For weekends, always return empty periods
+    if (selectedDay === 'Saturday' || selectedDay === 'Sunday') {
+      console.log('🌴 Weekend day - no periods');
       return [];
     }
-
-    const dayData = timetable.day[selectedDay] as Period[];
+    
+    if (!timetable) {
+      console.log('❌ No timetable data available');
+      return [];
+    }
+    
+    if (!selectedDay) {
+      console.log('❌ No selected day');
+      return [];
+    }
+    // Check if timetable has required properties for weekdays
+    if (selectedDay === 'Saturday' || selectedDay === 'Sunday') {
+      if (!timetable.day) {
+        console.log('❌ Timetable has no day property');
+        return [];
+      }
+      
+      if (!timetable.PeriodandTimings) {
+        console.log('❌ Timetable has no PeriodandTimings property'); 
+        return [];
+      }
+    }
+    if(selectedDay !== 'Saturday' && selectedDay !== 'Sunday'){
+      if (!timetable.day) {
+        console.log('❌ Timetable has no day property');
+        return [];
+      }
+      if (!timetable.PeriodandTimings) {
+        console.log('❌ Timetable has no PeriodandTimings property'); 
+        return [];
+      }
+      
+    }
+    
+    // Get day data or use empty array if day doesn't exist
+    const dayData = timetable.day[selectedDay] as Period[] || [];
+    console.log('✅ Day data for', selectedDay, ':', dayData);
+    
     return timetable.PeriodandTimings.map(pt => {
       const found = dayData.find(p => p.period === pt.period);
       if (found) return found;
-      const [startTime, endTime] = pt.timing.split(' - ');
+      
+      // Parse timing safely
+      const timingParts = pt.timing ? pt.timing.split(' - ') : ['', ''];
+      const [startTime, endTime] = timingParts;
+      
       return {
         period: pt.period,
         iscode: false,
-        startTime: startTime.trim(),
-        endTime: endTime.trim(),
+        startTime: startTime ? startTime.trim() : '',
+        endTime: endTime ? endTime.trim() : '',
         Activity: [],
       };
     });
@@ -305,7 +361,7 @@ const CurrentTimeTable = () => {
   useEffect(() => {
     if (!api) return;
 
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const handleSelect = () => {
       const selectedIndex = api.selectedScrollSnap();
       setSelectedDay(days[selectedIndex]);
@@ -348,8 +404,9 @@ const CurrentTimeTable = () => {
 
     // Use requestAnimationFrame for smooth DOM queries
     requestAnimationFrame(() => {
+      // Extra safety check - ensure element is still in DOM
       const containerEl = cardsContainerRef.current;
-      if (!containerEl) return;
+      if (!containerEl || !containerEl.children || !containerEl.isConnected) return;
       
       const cards = Array.from(containerEl.children) as HTMLElement[];
       if (cards.length === 0) return;
@@ -413,6 +470,9 @@ const CurrentTimeTable = () => {
 
   // Debounced resize handler
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     let timeoutId: NodeJS.Timeout;
     const handleResize = () => {
       clearTimeout(timeoutId);
@@ -431,7 +491,10 @@ const CurrentTimeTable = () => {
     if (hasAutoScrolledRef.current || !cardsContainerRef.current) return;
 
     const timer = setTimeout(() => {
-      const cards = Array.from(cardsContainerRef.current!.children) as HTMLElement[];
+      // Double-check the ref is still valid when timeout executes
+      if (!cardsContainerRef.current || !cardsContainerRef.current.children || !cardsContainerRef.current.isConnected) return;
+      
+      const cards = Array.from(cardsContainerRef.current.children) as HTMLElement[];
       
       // If we're in a period, scroll to that period
       if (currentPeriodIndex !== -1) {
@@ -494,12 +557,217 @@ const CurrentTimeTable = () => {
     };
   }, []);
 
+  // Check notification permission on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  // --- Notification Scheduling Logic ---
+  const scheduleNotifications = useCallback(async () => {
+    // Clear existing notifications
+    scheduledNotifications.forEach(timeout => clearTimeout(timeout));
+    setScheduledNotifications([]);
+
+    // Only schedule for weekdays and when user is authenticated
+    if (selectedDay === 'Saturday' || selectedDay === 'Sunday' || !userData?.email) {
+      return;
+    }
+
+    // Only schedule for today to avoid scheduling notifications for future days
+    if (selectedDay !== todayName) {
+      return;
+    }
+
+    // Check if notifications are enabled
+    if (notificationPermission !== 'granted') {
+      return;
+    }
+
+    // Get user ID
+    const userDataWithId = userData as UserData & { uid: string };
+    
+    try {
+      console.log('📅 Scheduling notifications on server for user:', userDataWithId.uid);
+      
+      // Send periods to server for scheduling
+      const response = await fetch('/api/schedule-notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          periods: periods,
+          userId: userDataWithId.uid,
+          selectedOptions: selectedOption
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to schedule notifications');
+      }
+      
+      const result = await response.json();
+      console.log('✅ Server-side notifications scheduled:', result.message);
+      
+      // Update local state to show scheduled count
+      setScheduledNotifications(new Array(result.scheduled).fill(null));
+      
+    } catch (error) {
+      console.error('❌ Error scheduling notifications on server:', error);
+    }
+  }, [periods, selectedDay, todayName, userData, notificationPermission, selectedOption]);
+
+  // Schedule notifications when periods change
+  useEffect(() => {
+    if (periods.length > 0 && isOnline) {
+      scheduleNotifications();
+    }
+    
+    // Cleanup function
+    return () => {
+      scheduledNotifications.forEach(timeout => clearTimeout(timeout));
+    };
+  }, [scheduleNotifications, isOnline]);
+
+  // Cleanup notifications on unmount
+  useEffect(() => {
+    return () => {
+      scheduledNotifications.forEach(timeout => clearTimeout(timeout));
+    };
+  }, []);
+
+  // Test function to check background notifications
+  const testNotifications = useCallback(async () => {
+    if (!userData?.uid) {
+      console.error('❌ No user ID available for testing');
+      return;
+    }
+
+    if (notificationPermission !== 'granted') {
+      console.error('❌ Notification permission not granted');
+      return;
+    }
+
+    try {
+      console.log('🧪 Starting background notification test...');
+      
+      // Create test periods - one every minute for the next 3 minutes
+      // But set start time 10 minutes AFTER the target time so notification fires at the target time
+      const now = new Date();
+      const testPeriods = [];
+      
+      for (let i = 1; i <= 3; i++) {
+        const targetNotificationTime = new Date(now.getTime() + i * 60 * 1000); // When we want notification to fire
+        const fakeStartTime = new Date(targetNotificationTime.getTime() + 10 * 60 * 1000); // 10 minutes later
+        
+        const timeString = fakeStartTime.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        });
+        
+        console.log(`🧪 Test ${i}: Notification should fire at ${targetNotificationTime.toLocaleTimeString()} (period "starts" at ${timeString})`);
+        
+        testPeriods.push({
+          period: `TEST-${i}`,
+          startTime: timeString,
+          endTime: timeString,
+          iscode: false,
+          Activity: [{
+            code: 'TEST001',
+            courseTitle: `YAAAAAAYY - Test ${i}`,
+            faculty: [{ initial: 'T', name: 'Test Faculty' }]
+          }]
+        });
+      }
+
+      // Send test periods to server for scheduling
+      const response = await fetch('/api/schedule-notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          periods: testPeriods,
+          userId: userData.uid,
+          selectedOptions: { 0: 0, 1: 0, 2: 0 } // Select first option for all
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to schedule test notifications');
+      }
+      
+      const result = await response.json();
+      console.log('✅ Test notifications scheduled:', result.message);
+      
+      // Show user feedback
+      const currentTime = new Date();
+      const firstNotificationTime = new Date(currentTime.getTime() + 60 * 1000);
+      toast.success(`🧪 Test started! You'll get ${result.scheduled} "YAAAAAAYY" notifications starting at ${firstNotificationTime.toLocaleTimeString()}, then every minute. Close your browser to test background notifications!`, {
+        duration: 8000
+      });
+      
+    } catch (error) {
+      console.error('❌ Error scheduling test notifications:', error);
+      toast.error('Failed to start notification test');
+    }
+  }, [userData, notificationPermission]);
+
+  // Add notification status indicator
+  const NotificationStatus = () => {
+    if (selectedDay === 'Saturday' || selectedDay === 'Sunday') return null;
+    if (selectedDay !== todayName) return null;
+    if (!userData || !('uid' in userData)) return null;
+
+    const getStatusColor = () => {
+      if (notificationPermission === 'granted' && scheduledNotifications.length > 0) {
+        return 'text-green-400';
+      }
+      if (notificationPermission === 'granted' && scheduledNotifications.length === 0) {
+        return 'text-yellow-400';
+      }
+      return 'text-red-400';
+    };
+
+    const getStatusText = () => {
+      if (notificationPermission !== 'granted') {
+        return 'Period reminders disabled - Click the bell icon to enable';
+      }
+      if (scheduledNotifications.length > 0) {
+        return `${scheduledNotifications.length} period reminders scheduled (10 min before each class)`;
+      }
+      return 'No upcoming period reminders for today';
+    };
+  };
+
   // Early returns for loading states
   if (timetableLoading) {
     return <div className='text-white'>Loading timetable...</div>;
   }
 
-  if (!timetableVisibility || !timetable) {
+  // Check for weekend offline scenario
+  if (!isOnline && !timetable && (actualTodayName === 'Saturday' || actualTodayName === 'Sunday')) {
+    return (
+      <div className="w-full max-w-5xl mx-auto p-4 text-center">
+        <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-6">
+          <h2 className="text-2xl font-bold text-white mb-4">🌴 It's {actualTodayName}!</h2>
+          <p className="text-white/80 text-lg mb-2">Enjoy your weekend!</p>
+          <p className="text-blue-300 text-sm">No classes scheduled for weekends</p>
+          
+          <div className="mt-4 p-3 bg-orange-500/20 border border-orange-500/50 rounded-lg">
+            <p className="text-orange-300 text-sm flex items-center justify-center gap-2">
+              📱 <span>Offline Mode: Connect to internet for latest updates</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if ((!timetableVisibility || !timetable) && selectedDay !== 'Saturday' && selectedDay !== 'Sunday') {
     return (
       <div className="w-full max-w-5xl mx-auto p-4 text-center">
         {userData?.CanUploadEdit === true && (
@@ -518,12 +786,31 @@ const CurrentTimeTable = () => {
     );
   }
 
-  if (!timetable && (selectedDay !== 'Saturday' && selectedDay !== 'Sunday')) {
+  // Handle no timetable for weekdays only
+  if (!timetable && selectedDay !== 'Saturday' && selectedDay !== 'Sunday') {
     return <div className='text-white'>Loading timetable... Make sure you have uploaded one.</div>;
+  }
+
+  // Additional safety check for malformed timetable data (skip for weekends)
+  if (timetable && (!timetable.day || !timetable.PeriodandTimings) && selectedDay !== 'Saturday' && selectedDay !== 'Sunday') {
+    return (
+      <div className="w-full max-w-5xl mx-auto p-4 text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Timetable Data Error</h2>
+        <p className="text-white/70">The timetable data appears to be corrupted. Please contact your administrator.</p>
+        <div className="mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg">
+          <p className="text-red-300 text-sm">
+            Missing: {!timetable.day ? 'day data' : ''} {!timetable.PeriodandTimings ? 'period timings' : ''}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4">
+      {/* Add notification status */}
+      <NotificationStatus />
+      
       {/* Static Day Display */}
       <div className="flex items-center justify-center mb-6">
         <OptionCarousel api={api} setApi={setApi} />
@@ -531,7 +818,7 @@ const CurrentTimeTable = () => {
 
       <div className="flex gap-4 lg:gap-8">
         {/* Vertical ticker - only render when animations are ready */}
-        {isToday && isAnimationsReady && (
+        {isToday && isAnimationsReady && selectedDay !== 'Saturday' && selectedDay !== 'Sunday' && (
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -720,7 +1007,23 @@ const CurrentTimeTable = () => {
 
         {/* Period Cards */}
         <div className={cn("flex-1 space-y-4 pb-15 max-sm:-translate-x-4 w-[200%]", !isToday && "max-sm:translate-x-6")} ref={cardsContainerRef}>
-          {periods.length > 0 ? (
+          {selectedDay === 'Saturday' || selectedDay === 'Sunday' ? (
+            <div className="flex items-center justify-center">
+              <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-6 max-w-md">
+                <h2 className="text-2xl font-bold text-white mb-4 text-center">🌴 It's {selectedDay}!</h2>
+                <p className="text-white/80 text-lg mb-2 text-center">Enjoy your weekend!</p>
+                <p className="text-blue-300 text-sm text-center">No classes scheduled for weekends</p>
+                
+                {!isOnline && (
+                  <div className="mt-4 p-3 bg-orange-500/20 border border-orange-500/50 rounded-lg">
+                    <p className="text-orange-300 text-sm flex items-center justify-center gap-2">
+                      📱 <span>Offline Mode: Connect to internet for latest updates</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : periods.length > 0 ? (
             periods.map((period, idx) => {
               const isCurrent = currentPeriodIndex === idx;
               return (
@@ -738,8 +1041,8 @@ const CurrentTimeTable = () => {
               );
             })
           ) : (
-            <div className="flex items-center justify-center h-48 bg-black/30 backdrop-blur-md rounded-lg shadow border border-white/10 text-white sm:w-[30rem] w-[28rem]">
-              <p className="text-lg">No periods scheduled for today.</p>
+            <div className="flex items-center justify-center">
+              <p className="text-lg text-white">No periods scheduled for today.</p>
             </div>
           )}
         </div>

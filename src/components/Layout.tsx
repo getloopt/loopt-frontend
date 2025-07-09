@@ -5,6 +5,7 @@ import { useState } from "react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(true);
 

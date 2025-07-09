@@ -5,25 +5,20 @@ import { ImageUploadDemo } from "@/components/imageUpload";
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/ui/sidebar';
 import {AppSidebar} from '@/components/app-sidebar'
 
-
-
-
 export default function UploadPage() {
     const [isOpen, setIsOpen] = useState(false);
   return (
     <SidebarProvider open={isOpen} onOpenChange={setIsOpen}>
-    <div className="relative">
+      <div className="relative">
+        {/* Desktop View - Layout with Sidebar */}
+        <div className="hidden lg:block">
+          <Layout>
+            <UploadContent />
+          </Layout>
+        </div>
 
-
-      {/* Desktop View - Layout with Sidebar */}
-      <div className="hidden lg:block">
-        <Layout>
-          <UploadContent />
-        </Layout>
-      </div>
-
-      {/* Tablet and Mobile Content */}
-      <div className="max-sm:hidden md:block lg:hidden">
+        {/* Tablet and Mobile Content */}
+        <div className="max-sm:hidden md:block lg:hidden">
           <div className="flex min-h-screen">
             <div className="flex-none">
               <AppSidebar />
@@ -31,21 +26,17 @@ export default function UploadPage() {
             <div className="flex-1">
               <SidebarTrigger className="fixed top-4 left-4 z-50 md:left-6" />
               <div className="translate-x-30">
-               <UploadContent/>
+                <UploadContent/>
               </div>
             </div>
           </div>
         </div>
-        <div className="translate-x-10 hidden max-sm:block ">
-               <UploadContent/>
-              </div>
-
+        
+        <div className="translate-x-10 hidden max-sm:block">
+          <UploadContent/>
         </div>
-
+      </div>
     </SidebarProvider>
-
-
-
   );
 }
 

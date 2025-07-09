@@ -38,6 +38,9 @@ export function NavBar({ items, className }: NavBarProps) {
   }, [router.pathname, items])
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768)
     }

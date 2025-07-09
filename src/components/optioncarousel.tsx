@@ -44,7 +44,7 @@ const OptionCarousel: React.FC<OptionCarouselProps> = ({ api, setApi }) => {
     const carouselDays = useMemo(() => {
         return isEditPage 
             ? ['Timetable Information', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-            : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     }, [isEditPage]);
 
     // Get current day name

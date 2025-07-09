@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import sampleTable from '../../../data/sampletable'
 import OptionCarousel from '../optioncarousel'
 import { type CarouselApi } from "@/components/ui/ui/carousel";
 import DaySchedule from './DaySchedule';

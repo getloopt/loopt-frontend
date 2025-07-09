@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
-import { db } from '../../firebase-config'
+import { auth, db } from '../../firebase-config'
 import { collection, deleteDoc, doc, getDocs, query, updateDoc, where } from 'firebase/firestore'
 import { Label } from '@/components/ui/ui/label'
 import { Input } from '@/components/ui/ui/input'
-  import { Button } from '@/components/ui/ui/button'
+import { Button } from '@/components/ui/ui/button'
 import { ChevronDown, AlertCircle } from "lucide-react";
+import { useNetworkStatus } from '@/hooks/use-network-status'
 
 import {
   AlertDialog,
@@ -35,7 +36,7 @@ const AboutPage = () => {
   const [localData, setLocalData] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
-
+  const  isOnline  = useNetworkStatus();  
   const departments = [
     { value: "bme", label: "Biomedical Engineering" },
     { value: "che", label: "Chemical Engineering" },
@@ -71,12 +72,44 @@ const AboutPage = () => {
 
   useEffect(() => {
     if (userData) {
+      console.log('🔍 UserData:', userData);
+      console.log('🔍 User:', user);
+      console.log('✅ Setting localData from userData:', userData);
       setLocalData(userData);
+          } else if (auth.currentUser?.uid) {
+        // Always try localStorage if no userData (whether online or offline)
+        console.log('🔍 Attempting to load data from localStorage for key:', auth.currentUser.uid);
+        const offlineData = localStorage.getItem(auth.currentUser.uid);
+        console.log('📦 LocalStorage data found:', offlineData);
+      
+      if (offlineData) {
+        try {
+          const parsedData = JSON.parse(offlineData);
+          console.log('✅ Successfully parsed localStorage data:', parsedData);
+          setLocalData(parsedData);
+          
+        } catch (error) {
+          console.error("❌ Error parsing offline data:", error);
+          toast.error('Error loading cached profile data');
+        }
+      } else {
+        console.log('❌ No data found in localStorage');
+        if (!isOnline) {
+          toast.error('📱 No offline data available', {
+            description: 'Please connect to the internet to load your profile',
+            duration: 4000,
+          });
+        }
+      }
     }
-  }, [userData]);
+  }, [userData, isOnline, auth.currentUser?.uid]);
 
   const updateUser = async () => {
     if (!user?.email) return;
+    if(!isOnline) {
+      toast.error("You are offline. Please connect to the internet to update your profile.");
+      return;
+    }
     try {
       const usersCollection = collection(db, "users");
       const userQuery = query(usersCollection, where("email", "==", user.email));
@@ -121,6 +154,12 @@ const AboutPage = () => {
       if (!querySnapshot.empty) {
         const userRef = doc(db, "users", querySnapshot.docs[0].id);
         await deleteDoc(userRef);
+        
+        // Clear localStorage
+        if (auth.currentUser?.uid) {
+          localStorage.removeItem(auth.currentUser.uid);
+        }
+        
         await logout();
       }
     } catch (error) {
@@ -160,6 +199,14 @@ const AboutPage = () => {
                 About
               </h1>
               <p className="mt-4 font-proxima-nova text-neutral-50">You can check your details here</p>
+              
+              {!isOnline && (
+                <div className="mt-4 p-3 bg-orange-500/20 border border-orange-500/50 rounded-lg">
+                  <p className="text-orange-300 text-sm font-proxima-nova flex items-center justify-center gap-2">
+                    📱 <span>Offline Mode: Showing cached data</span>
+                  </p>
+                </div>
+              )}
             </div>
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="department" className="text-white font-proxima-nova font-bold">Department</Label>

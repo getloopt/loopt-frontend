@@ -10,16 +10,26 @@ import {Edit, Upload, LogOut } from "lucide-react"
 import { Menu } from "lucide-react"
 import { useRouter } from 'next/router'
 import { useAuth } from "@/contexts/AuthContext"
+import { useNetworkStatus } from "@/hooks/use-network-status"
+import { toast } from "sonner"
 
   export function DropdownSM() {
     const router = useRouter();
-    const { logout, userData } = useAuth();
-
+    const { logout } = useAuth();
+    const isOnline = useNetworkStatus();
     const handleEditClick = () => {
+      if(!isOnline){
+        toast.error("You are offline. Please connect to the internet to edit the timetable.");
+        return;
+      }
       router.push('/editTimetable');
     };
 
     const handleUploadClick = () => {
+      if(!isOnline){
+        toast.error("You are offline. Please connect to the internet to upload the timetable.");
+        return;
+      }
       router.push('/timetable/upload');
     };
 

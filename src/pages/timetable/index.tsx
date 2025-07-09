@@ -1,8 +1,7 @@
 import React from "react";
 import Layout from '@/components/Layout';
-import Link from 'next/link';
+
 import { Button } from "@/components/ui/ui/button";
-import { Upload, Edit } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import CurrentTimeTable from "@/components/correct-timetable/CurrentTimeTable";
 import { Sidebar, SidebarProvider, SidebarTrigger } from "@/components/ui/ui/sidebar";

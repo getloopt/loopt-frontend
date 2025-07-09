@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
+import { getFirestore, enableNetwork, disableNetwork, connectFirestoreEmulator } from "firebase/firestore";
 import dotenv from "dotenv";
-import { getFirestore } from "firebase/firestore";
 
 dotenv.config();
 
@@ -22,23 +22,38 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Set persistence immediately
+// Enable Firestore offline persistence (this is automatic in v9+)
+// Firestore automatically enables offline persistence by default
+
+// Set auth persistence immediately
 setPersistence(auth, browserLocalPersistence)
   .then(() => {
-    console.log("Firebase persistence initialized");
+    console.log("Firebase auth persistence enabled");
   })
   .catch((error) => {
-    console.error("Error setting persistence:", error);
+    console.error("Error setting auth persistence:", error);
   });
 
 // Test if Firebase is connected properly
 try {
-  console.log("Initializing Firebase...");
-  console.log("Firebase config:", firebaseConfig);
-  console.log(auth)
+  console.log("Firebase initialized successfully");
+  console.log("Offline persistence: Enabled by default");
+  
+  // Log connection status
+  if (typeof window !== 'undefined') {
+    console.log("Network status:", navigator.onLine ? 'Online' : 'Offline');
+  }
 } catch (error) {
   console.error("Error initializing Firebase:", error);
-  console.log("Firebase config:", firebaseConfig);
 }
+
+// Helper functions for manual network control (optional)
+export const goOffline = () => {
+  return disableNetwork(db);
+};
+
+export const goOnline = () => {
+  return enableNetwork(db);
+};
 
 export { app, auth, db };

@@ -3,9 +3,20 @@ import Onboarding from "@/components/Onboarding";
 import { auth } from '../../firebase-config'
 import { db } from '../../firebase-config'
 import { collection, getDocs, query, where } from 'firebase/firestore'
+import { useNetworkStatus } from '@/hooks/use-network-status'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function OnboardingPage() {
+    const isOnline = useNetworkStatus();
+    const { user } = useAuth();
     const checkUserInDatabase = async () => {
+        // Only check database if online
+        if (!isOnline) {
+            console.log("Offline - skipping database check")
+            localStorage.getItem(user?.uid!)
+            return;
+        }
+        
         const usersCollection = collection(db, "users");
         const userQuery = query(usersCollection, where("email", "==", auth.currentUser?.email));
         const querySnapshot = await getDocs(userQuery);

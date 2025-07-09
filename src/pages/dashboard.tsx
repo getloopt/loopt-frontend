@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import CurrentTimeTable from '@/components/correct-timetable/CurrentTimeTable';
+import { NotificationSettings } from '@/components/ui/ui/notifications';
+import { toast } from 'sonner';
+
 
 // Emergency fallback component for mobile
 const MobileErrorFallback = ({ error }: { error: string }) => (
@@ -36,6 +39,9 @@ const MobileDashboard = () => {
   const [debugInfo, setDebugInfo] = useState('');
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     const info = {
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
@@ -75,7 +81,8 @@ const MobileDashboard = () => {
           ease: "easeOut"
         }}
       >
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-4xl space-y-4">
+          <NotificationSettings />
           <CurrentTimeTable />
         </div>
         
@@ -120,6 +127,57 @@ export default function Dashboard() {
       setAuthError(err instanceof Error ? err.message : 'Unknown authentication error');
     }
   }, [loading, isAuthenticated, router]);
+
+  // 🔥 UPDATED: Direct server action call
+  const sendTestNotification = async () => {
+    try {
+      const userId = user?.uid;
+      if (!userId) {
+        toast.error('No user ID found. Please make sure you are logged in.');
+        return;
+      }
+
+      console.log('🧪 TESTING: Sending test notification for user:', userId);
+      
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        const permission = Notification.permission;
+        if (permission !== 'granted') {
+          toast.warning('Please enable notifications first by clicking the bell icon!');
+          return;
+        }
+      }
+
+      // Call API route instead of server action directly
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Test button was clicked! Your notification system is working perfectly. 🎉',
+          userId: userId,
+          icon: '/images/icon512_rounded.png',
+          title: '🧪 Test Notification - Button Clicked!'
+        })
+      });
+      
+      if (response.ok) {
+        console.log('✅ Test notification sent successfully');
+        toast.success('Test notification sent!', {
+          description: 'Check your browser notifications',
+          duration: 3000
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('❌ API call failed:', errorData);
+        toast.error(`Failed to send notification: ${errorData.message}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error sending test notification:', error);
+      toast.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   // Only show loading on initial mount, not during route changes
   if (!mounted) {
@@ -197,11 +255,32 @@ export default function Dashboard() {
               ease: "easeOut"
             }}
           >
-            <div className="max-md:translate-x-17 lg:translate-x-30 xl:translate-x-50">
+            <div className="max-md:translate-x-17 lg:translate-x-30 xl:translate-x-50 space-y-4">
+              <NotificationSettings />
               <CurrentTimeTable />
+              
+              {/* 🔥 ADD THIS: Test button for desktop */}
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={sendTestNotification}
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transition-colors font-medium"
+                >
+                  🧪 Test Notification
+                </button>
+              </div>
             </div>
           </motion.div>
         </Layout>
+        
+        {/* 🔥 ALTERNATIVE: Fixed position test button for desktop */}
+        <div className="fixed bottom-4 right-4 z-50">
+          <button
+            onClick={sendTestNotification}
+            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg transition-colors"
+          >
+            🧪 Test Notification
+          </button>
+        </div>
       </div>
     </motion.div>
   );

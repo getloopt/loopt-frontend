@@ -13,6 +13,8 @@ import { FirebaseError } from 'firebase/app';
 import { useRouter } from 'next/router';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { toast } from "sonner"
+import { useNetworkStatus } from '../hooks/use-network-status';
+import { WifiOff } from 'lucide-react';
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({
@@ -20,9 +22,18 @@ provider.setCustomParameters({
 });
 
 export function SignupForm() {
-  const router = useRouter()
+  const router = useRouter();
+  const isOnline = useNetworkStatus();
   
   const handleButtonClick = async () => {
+    // Check if user is offline
+    if (!isOnline) {
+      toast.error("📱 You're offline", {
+        description: "Please connect to the internet to sign in",
+        duration: 4000,
+      });
+      return;
+    }
     try {
       // Step 1: Get Google Auth Result
       const result = await signInWithPopup(auth, provider);
@@ -113,11 +124,28 @@ export function SignupForm() {
         <CardFooter className="flex-col gap-2">
           <Button
             variant="outline"
-            className="relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full bg-stone-300 text-stone-900 hover:cursor-pointer"
+            className={`relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full ${
+              isOnline 
+                ? 'bg-stone-300 text-stone-900 hover:cursor-pointer' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
             onClick={handleButtonClick}
+            disabled={!isOnline}
           >
-            Sign Up with SSN Google Account
+            {isOnline ? (
+              'Sign Up with SSN Google Account'
+            ) : (
+              <>
+                <WifiOff className="w-4 h-4 mr-2" />
+                Sign In (Offline)
+              </>
+            )}
           </Button>
+          {!isOnline && (
+            <p className="text-sm text-gray-600 text-center mt-2">
+              Connect to the internet to sign in
+            </p>
+          )}
         </CardFooter>
       </Card>
     </div>

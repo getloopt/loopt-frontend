@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/ui/dropdown-menu"
 import { type CarouselApi } from "@/components/ui/ui/carousel"
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '../../../firebase-config';
+import { auth, db } from '../../../firebase-config';
 import { collection, query, where, getDocs, doc, setDoc, updateDoc } from 'firebase/firestore';
 
 // Define a type for our course data for better type checking
@@ -147,12 +147,16 @@ const FormTimetable = () => {
             setSampleCourses(prev => {
                 const updated = prev.map(course => course.code === originalCode ? updatedCourse : course);
                 saveCoursesToFirestore([...updated, ...newCourses]);
+                // Save to localStorage
+                localStorage.setItem(auth.currentUser?.uid!, JSON.stringify([...updated, ...newCourses]));
                 return updated;
             });
         } else {
             setNewCourses(prev => {
                 const updated = prev.map(course => course.code === originalCode ? updatedCourse : course);
                 saveCoursesToFirestore([...sampleCourses, ...updated]);
+                // Save to localStorage 
+                localStorage.setItem(auth.currentUser?.uid!, JSON.stringify([...sampleCourses, ...updated]));
                 return updated;
             });
         }
@@ -178,6 +182,8 @@ const FormTimetable = () => {
         setNewCourses(prev => {
             const updated = [...prev, newCourse];
             saveCoursesToFirestore([...sampleCourses, ...updated]);
+            // Save to localStorage
+            localStorage.setItem(auth.currentUser?.uid!, JSON.stringify([...sampleCourses, ...updated]));
             return updated;
         });
         // reset form
@@ -188,6 +194,8 @@ const FormTimetable = () => {
         setNewCourses(prev => {
             const updated = prev.filter(course => course.code !== courseCode);
             saveCoursesToFirestore([...sampleCourses, ...updated]);
+            // Save to localStorage
+            localStorage.setItem(auth.currentUser?.uid!, JSON.stringify([...sampleCourses, ...updated]));
             return updated;
         });
     };

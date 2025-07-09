@@ -1,15 +1,14 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Inter } from 'next/font/google';
-import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { NavBarDemo } from '@/components/Navbar';
-import { TimetableProvider } from "@/contexts/timetableData";
-
-import dynamic from 'next/dynamic'
+import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { TimetableProvider } from '@/contexts/timetableData';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,71 +16,24 @@ const inter = Inter({ subsets: ['latin'] });
 const AnimatePresence = dynamic(
   () => import('framer-motion').then(mod => mod.AnimatePresence),
   { ssr: false }
-)
+);
 
-// Instead of importing directly, use dynamic import when needed
-const loadSampleData = async () => {
-  const { default: sampleTable } = await import('../../data/sampletable')
-  return sampleTable
-}
-
-// Error Boundary Component for mobile debugging
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: string }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: '' };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error: error.message };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-500 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h2 className="text-xl font-bold text-red-600 mb-4">App Error</h2>
-            <p className="text-gray-700 mb-4">Something went wrong:</p>
-            <div className="bg-gray-100 p-3 rounded text-sm font-mono">
-              {this.state.error}
-            </div>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded w-full"
-            >
-              Reload App
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-// Mobile Debug Component
+// Mobile Debug Component - Keeping this for development
 const MobileDebugger = () => {
   const [debugInfo, setDebugInfo] = useState('');
   const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     const info = {
       userAgent: navigator.userAgent,
       screen: `${window.screen.width}x${window.screen.height}`,
       viewport: `${window.innerWidth}x${window.innerHeight}`,
-      online: navigator.onLine,
       localStorage: (() => {
         try {
-          return !!localStorage.getItem('auth_user');
+          return !!localStorage.getItem(' userData');
         } catch {
           return false;
         }
@@ -90,6 +42,8 @@ const MobileDebugger = () => {
     };
     setDebugInfo(JSON.stringify(info, null, 2));
   }, []);
+
+  if (process.env.NODE_ENV === 'production') return null;
 
   return (
     <>
@@ -127,9 +81,20 @@ export default function App({ Component, pageProps }: AppProps) {
   // Client-side mounting check
   useEffect(() => {
     setMounted(true);
+    
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/custom-sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered successfully:', registration);
+        })
+        .catch((error) => {
+          console.log('Service Worker registration failed:', error);
+        });
+    }
   }, []);
 
-  // Routes where we don't want to show the nav bar (e.g., auth pages)
+  // Routes where we don't want to show the nav bar
   const hideNav = ['/', '/signup', '/onboarding'].includes(router.pathname);
 
   // Show loading screen until mounted (prevents hydration issues)
@@ -142,18 +107,17 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <ErrorBoundary>
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="theme-color" content="#3b82f6" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
       <AuthProvider>
         <TimetableProvider>
-          <Head>
-            {/* Mobile responsiveness */}
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            {/* Prevent zoom on iOS */}
-            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-          </Head>
           <main className={inter.className}>
-            <MobileDebugger />
             {!hideNav && <NavBarDemo />}
+            <MobileDebugger />
             <AnimatePresence mode="wait" initial={false}>
               <Component {...pageProps} key={router.asPath} />
             </AnimatePresence>
@@ -161,7 +125,7 @@ export default function App({ Component, pageProps }: AppProps) {
           </main>
         </TimetableProvider>
       </AuthProvider>
-    </ErrorBoundary>
+    </>
   );
 }
 

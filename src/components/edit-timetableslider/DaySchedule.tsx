@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/ui/label";
 import { Button } from "@/components/ui/ui/button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/ui/alert-dialog";
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '../../../firebase-config';
+import { auth, db } from '../../../firebase-config';
+import { toast } from 'sonner';
 import { collection, query, where, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { useTimetable } from '@/contexts/timetableData';
 
 interface Activity {
   code: string | null;
@@ -42,46 +44,38 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
 
   useEffect(() => {
     if (!user) return;
+    const { timetable } = useTimetable();
 
-    const fetchTimetable = async () => {
-        try {
-            const timetableCollectionRef = collection(db, 'TimeTable');
-            const q = query(timetableCollectionRef, where('email', '==', user.email));
-            const querySnapshot = await getDocs(q);
-      
-            if (!querySnapshot.empty) {
-              const timetableDoc = querySnapshot.docs[0].data() as TimetableData;
-              
-              if (timetableDoc && timetableDoc.day && timetableDoc.PeriodandTimings) {
-              const dayData: Period[] = timetableDoc.day[day] || [];
-              setRoomData(timetableDoc.classRoom || '');
-              
-              const fullPeriods: Period[] = timetableDoc.PeriodandTimings.map((pt: any) => {
-                const found = dayData.find((p: any) => p.period === pt.period);
-                if (found) return found;
-                const [start, end] = (pt.timing as string).split(' - ');
-                return {
-                  period: pt.period,
-                  iscode: false,
-                  startTime: start.trim(),
-                  endTime: end.trim(),
-                  Activity: [],
-                } as Period;
-              });
-      
-              setPeriods(fullPeriods);
-              } else {
-                console.error("Fetched timetable document is incomplete.", timetableDoc);
-                setPeriods([]);
-                setRoomData('');
-              }
-            }
-        } catch (error) {
-            console.error("Error fetching timetable from Firestore:", error);
-        }
-    };
+    useEffect(() => {
+      if (!timetable) return;
 
-    fetchTimetable();
+      if (timetable.day && timetable.PeriodandTimings) {
+        const dayData: Period[] = timetable.day[day] || [];
+        setRoomData(timetable.classRoom || '');
+        
+        const fullPeriods: Period[] = timetable.PeriodandTimings.map((pt: any) => {
+          const found = dayData.find((p: any) => p.period === pt.period);
+          if (found) return found;
+          
+          const [start, end] = (pt.timing as string).split(' - ');
+          return {
+            period: pt.period,
+            iscode: false,
+            startTime: start.trim(), 
+            endTime: end.trim(),
+            Activity: [],
+          } as Period;
+        });
+
+        setPeriods(fullPeriods);
+      } else {
+        console.error("Timetable data is incomplete.", timetable);
+        setPeriods([]);
+        setRoomData('');
+      }
+    }, [timetable, day]);
+
+
   }, [day, user]);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -197,7 +191,9 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
       await updateDoc(docRef, { [`day.${day}`]: updatedPeriods });
     } catch (err) {
       console.error('Error saving timetable back to Firestore:', err);
+      toast.error("Error saving timetable back to Firestore. Please try again.");
     }
+
   };
 
   const saveNewActivity = () => {
@@ -226,6 +222,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
     );
     setPeriods(newPeriods);
     savePeriodsToFirestore(newPeriods);
+    localStorage.setItem(auth.currentUser?.uid!, JSON.stringify(newPeriods));
     setAddDialogOpen(false);
   };
 
@@ -259,6 +256,7 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
     });
     setPeriods(editedPeriods);
     savePeriodsToFirestore(editedPeriods);
+    localStorage.setItem(auth.currentUser?.uid!, JSON.stringify(editedPeriods));
     setEditDialogOpen(false);
   };
 
