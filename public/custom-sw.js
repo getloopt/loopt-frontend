@@ -64,6 +64,18 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Skip caching for API requests
+  if (url.pathname.startsWith('/api/') || 
+      url.hostname.includes('trycloudflare.com') ||
+      url.hostname.includes('localhost') && url.port === '3001' ||
+      event.request.method !== 'GET') {
+    // For API requests, just pass through to network
+    return event.respondWith(fetch(event.request));
+  }
+  
+  // For non-API requests, use cache-first strategy
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -83,14 +95,11 @@ self.addEventListener('fetch', (event) => {
           // Clone the response because it's a stream
           const responseToCache = response.clone();
           
-          // Only cache GET requests - POST requests are not supported by Cache API
-          if (event.request.method === 'GET') {
-            // Add successful responses to cache
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-          }
+          // Add successful responses to cache
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
           
           return response;
         });
@@ -116,30 +125,89 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', async (event) => {
-const {title,message,icon} = await event.data.json()
-
-event.waitUntil(
-  self.registration.showNotification(title, {
-    body: message,
-    icon: icon
-  })
-)
-
+  console.log('🔔 [SW] Push event received');
+  
+  if (!event.data) {
+    console.error('❌ [SW] Push event has no data');
+    return;
+  }
+  
+  try {
+    const payload = event.data.json();
+    console.log('📦 [SW] Push payload:', payload);
+    
+    const { title, message, icon } = payload;
+    
+    const notificationOptions = {
+      body: message || 'You have a new notification',
+      icon: icon || '/images/icon512_rounded.png',
+      badge: '/images/icon512_rounded.png',
+      vibrate: [200, 100, 200],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: 1
+      },
+      actions: [
+        {
+          action: 'view',
+          title: 'View',
+        },
+        {
+          action: 'close',
+          title: 'Close',
+        }
+      ]
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(title || 'Notification', notificationOptions)
+        .then(() => console.log('✅ [SW] Notification shown successfully'))
+        .catch(err => console.error('❌ [SW] Error showing notification:', err))
+    );
+  } catch (error) {
+    console.error('❌ [SW] Error parsing push data:', error);
+    
+    // Fallback notification
+    event.waitUntil(
+      self.registration.showNotification('New Notification', {
+        body: 'You have a new notification',
+        icon: '/images/icon512_rounded.png'
+      })
+    );
+  }
 })
 
-self.addEventListener('notificationclick',(event)=>{
-  event.notification.close()
+self.addEventListener('notificationclick', (event) => {
+  console.log('👆 [SW] Notification clicked:', event.action);
+  event.notification.close();
+  
+  let responseUrl = '/dashboard';
+  
+  if (event.action === 'view') {
+    responseUrl = '/dashboard';
+  } else if (event.action === 'close') {
+    return; // Just close the notification
+  }
+  
   event.waitUntil(
-    clients.openWindow('/')
-    .then(()=>{
-      if(clients.getFocused()){
-        clients.getFocused().focus()
-      }
-    })
-    .catch((error)=>{
-      console.error('Error focusing window:',error) 
-    })
-  )
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if there's already a window/tab open
+        for (let i = 0; i < windowClients.length; i++) {
+          const client = windowClients[i];
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // If no window is open, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(responseUrl);
+        }
+      })
+      .catch((error) => {
+        console.error('❌ [SW] Error handling notification click:', error);
+      })
+  );
 })
 
 

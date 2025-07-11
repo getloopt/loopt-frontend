@@ -1,12 +1,13 @@
 // API Configuration for different environments
 const getApiBaseUrl = () => {
   // In production, use the environment variable
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
+  // if (process.env.NEXT_PUBLIC_API_URL) {
+  //   console.log('Using production API URL:', process.env.NEXT_PUBLIC_API_URL);
+  //   return process.env.NEXT_PUBLIC_API_URL;
+  // }
   
   // In development, use local API routes (default Next.js behavior)
-  return '';
+  return 'https://meetings-flux-races-jerusalem.trycloudflare.com';
 };
 
 export const API_CONFIG = {

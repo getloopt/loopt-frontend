@@ -87,15 +87,6 @@ const MobileDashboard = () => {
           <CurrentTimeTable />
         </div>
         
-        {/* Debug info - only show if there are issues */}
-        <div className="fixed bottom-20 right-4 z-50">
-          <details className="bg-white p-2 rounded shadow-lg text-xs">
-            <summary className="cursor-pointer text-blue-600">Debug Info</summary>
-            <pre className="mt-2 bg-gray-100 p-2 rounded overflow-auto max-h-40 w-72">
-              {debugInfo}
-            </pre>
-          </details>
-        </div>
       </motion.div>
     );
   } catch (err) {
@@ -259,29 +250,9 @@ export default function Dashboard() {
             <div className="max-md:translate-x-17 lg:translate-x-30 xl:translate-x-50 space-y-4">
               <NotificationSettings />
               <CurrentTimeTable />
-              
-              {/* 🔥 ADD THIS: Test button for desktop */}
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={sendTestNotification}
-                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transition-colors font-medium"
-                >
-                  🧪 Test Notification
-                </button>
-              </div>
             </div>
           </motion.div>
         </Layout>
-        
-        {/* 🔥 ALTERNATIVE: Fixed position test button for desktop */}
-        <div className="fixed bottom-4 right-4 z-50">
-          <button
-            onClick={sendTestNotification}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg transition-colors"
-          >
-            🧪 Test Notification
-          </button>
-        </div>
       </div>
     </motion.div>
   );

@@ -52,27 +52,82 @@ export const NotificationSettings = () => {
       const subscriptionData = JSON.parse(JSON.stringify(subscription));
       console.log('Data being saved via API:', subscriptionData);
       
-      const response = await fetch(getApiUrl('manageSubscription'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'save',
-          subscription: subscriptionData,
-          userId: user.uid
-        })
-      });
-
-      if (response.ok) {
-        console.log('✅ Successfully saved to Admin DB via API!');
-        toast.success('Period reminders enabled successfully!', {
-          description: 'You\'ll get notified 10 minutes before each class'
+      const apiUrl = getApiUrl('manageSubscription');
+      console.log('API URL:', apiUrl);
+      
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'save',
+            subscription: subscriptionData,
+            userId: user.uid
+          })
         });
-      } else {
-        const errorData = await response.json();
-        console.error('❌ Failed to save subscription:', errorData);
-        toast.error('Failed to save subscription: ' + errorData.message);
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        if (response.ok) {
+          console.log('✅ Successfully saved to Admin DB via API!');
+          toast.success('Period reminders enabled successfully!', {
+            description: 'You\'ll get notified 10 minutes before each class'
+          });
+        } else {
+          // Try to read the response as text first
+          const contentType = response.headers.get('content-type');
+          console.log('Response content-type:', contentType);
+          
+          let errorMessage = 'Failed to save subscription';
+          
+          if (contentType && contentType.includes('application/json')) {
+            try {
+              const errorData = await response.json();
+              console.error('❌ Failed to save subscription:', errorData);
+              errorMessage = errorData.message || errorMessage;
+            } catch (e) {
+              console.error('Failed to parse error response as JSON');
+            }
+          } else {
+            // If not JSON, read as text
+            const errorText = await response.text();
+            console.error('❌ Non-JSON error response:', errorText);
+            
+            if (errorText.includes('CORS')) {
+              errorMessage = 'CORS error - backend needs to be restarted with updated configuration';
+            } else if (errorText.includes('Offline')) {
+              errorMessage = 'Backend server appears to be offline';
+            } else {
+              errorMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+          }
+          
+          toast.error(errorMessage);
+        }
+      } catch (fetchError) {
+        console.error('❌ Network error:', fetchError);
+        console.error('Failed to connect to:', apiUrl);
+        
+        // Provide helpful error message based on the error type
+        if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
+          toast.error('Cannot connect to backend server', {
+            description: `Make sure the backend is running on ${apiUrl}`
+          });
+          
+          // Additional debugging info in console
+          console.log('Debugging tips:');
+          console.log('1. Check if backend is running on port 3001');
+          console.log('2. Current frontend URL:', window.location.origin);
+          console.log('3. Trying to reach backend at:', apiUrl);
+          console.log('4. You may need to restart the backend after the CORS update');
+        } else {
+          toast.error('Network error: ' + (fetchError as Error).message);
+        }
+        
+        throw fetchError;
       }
     } catch (error) {
       console.error('Error in generateSubscription:', error);
@@ -129,14 +184,77 @@ export const NotificationSettings = () => {
     }
   };
 
+  const clearOldSubscription = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Clear from server
+      try {
+        const response = await fetch(getApiUrl('manageSubscription'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'delete',
+            userId: user.uid
+          })
+        });
+
+        // Log response details
+        console.log('Clear subscription response status:', response.status);
+        
+        if (!response.ok) {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            console.error('Failed to clear subscription:', errorData);
+          } else {
+            const errorText = await response.text();
+            console.error('Non-JSON error while clearing:', errorText);
+          }
+        }
+      } catch (fetchError) {
+        console.error('Network error while clearing subscription:', fetchError);
+        // Continue with local cleanup even if server fails
+      }
+
+      // Clear from service worker
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          const subscription = await registration.pushManager.getSubscription();
+          if (subscription) {
+            await subscription.unsubscribe();
+            console.log('✅ Old subscription cleared');
+          }
+        }
+      }
+
+      toast.success('Old subscription cleared - now re-enabling notifications...');
+      
+      // Now re-register with new VAPID keys
+      setTimeout(() => {
+        requestNotificationPermission();
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error clearing old subscription:', error);
+      toast.error('Error clearing old subscription');
+    }
+  };
+
   return (
     <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
       <button 
         onClick={() => {
           if (permission === 'granted') {
-            toast.info('Period reminders are already enabled!', {
-              description: 'You\'ll get notified 10 minutes before each class'
-            });
+            // When notifications are already granted but we click the bell icon,
+            // we want to clear the old subscription and create a new one.
+            // This helps fix issues where notifications stop working,
+            // by removing the old subscription data and registering fresh.
+            clearOldSubscription();
           } else if (permission === 'default') {
             requestNotificationPermission();
           } else {

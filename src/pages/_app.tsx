@@ -47,29 +47,7 @@ const MobileDebugger = () => {
 
   return (
     <>
-      <button
-        onClick={() => setShowDebug(!showDebug)}
-        className="fixed bottom-4 right-4 bg-red-500 text-white p-2 rounded-full z-50 text-xs"
-        style={{ zIndex: 9999 }}
-      >
-        🐛
-      </button>
-      {showDebug && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white p-4 rounded-lg max-w-md w-full max-h-80 overflow-auto">
-            <h3 className="font-bold mb-2">Mobile Debug Info</h3>
-            <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
-              {debugInfo}
-            </pre>
-            <button
-              onClick={() => setShowDebug(false)}
-              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded w-full"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      
     </>
   );
 };
@@ -117,7 +95,6 @@ export default function App({ Component, pageProps }: AppProps) {
         <TimetableProvider>
           <main className={inter.className}>
             {!hideNav && <NavBarDemo />}
-            <MobileDebugger />
             <AnimatePresence mode="wait" initial={false}>
               <Component {...pageProps} key={router.asPath} />
             </AnimatePresence>

@@ -39,44 +39,44 @@ interface TimetableData {
 
 const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
   const { user } = useAuth();
+  const { timetable } = useTimetable(); // Moved hook to top level
   const [periods, setPeriods] = useState<Period[]>([]);
   const [roomData, setRoomData] = useState<string>('');
 
   useEffect(() => {
-    if (!user) return;
-    const { timetable } = useTimetable();
+    // This effect now correctly handles all updates
+    if (!user || !timetable) {
+      setPeriods([]);
+      setRoomData('');
+      return;
+    };
 
-    useEffect(() => {
-      if (!timetable) return;
-
-      if (timetable.day && timetable.PeriodandTimings) {
-        const dayData: Period[] = timetable.day[day] || [];
-        setRoomData(timetable.classRoom || '');
+    if (timetable.day && timetable.PeriodandTimings) {
+      const dayData: Period[] = timetable.day[day] || [];
+      setRoomData(timetable.classRoom || '');
+      
+      const fullPeriods: Period[] = timetable.PeriodandTimings.map((pt: any) => {
+        const found = dayData.find((p: any) => p.period === pt.period);
+        if (found) return found;
         
-        const fullPeriods: Period[] = timetable.PeriodandTimings.map((pt: any) => {
-          const found = dayData.find((p: any) => p.period === pt.period);
-          if (found) return found;
-          
-          const [start, end] = (pt.timing as string).split(' - ');
-          return {
-            period: pt.period,
-            iscode: false,
-            startTime: start.trim(), 
-            endTime: end.trim(),
-            Activity: [],
-          } as Period;
-        });
+        const [start, end] = (pt.timing as string).split(' - ');
+        return {
+          period: pt.period,
+          iscode: false,
+          startTime: start.trim(), 
+          endTime: end.trim(),
+          Activity: [],
+        } as Period;
+      });
 
-        setPeriods(fullPeriods);
-      } else {
-        console.error("Timetable data is incomplete.", timetable);
-        setPeriods([]);
-        setRoomData('');
-      }
-    }, [timetable, day]);
+      setPeriods(fullPeriods);
+    } else {
+      console.error("Timetable data is incomplete.", timetable);
+      setPeriods([]);
+      setRoomData('');
+    }
+  }, [day, user, timetable]); // Dependencies are now in one place
 
-
-  }, [day, user]);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [selectedOption, setSelectedOption] = useState<Record<string, number>>({});

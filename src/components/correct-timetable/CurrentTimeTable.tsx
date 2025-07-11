@@ -251,8 +251,8 @@ const CurrentTimeTable = () => {
     new Date().toLocaleDateString('en-US', { weekday: 'long' }), []
   );
   
-  const todayName = useMemo(() => 'Friday', []);
-  const [selectedDay, setSelectedDay] = useState<string>('Friday');
+  const todayName = useMemo(() => 'Monday', []);
+  const [selectedDay, setSelectedDay] = useState<string>('Monday');
   const [periods, setPeriods] = useState<Period[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [progress, setProgress] = useState(0);
@@ -654,8 +654,7 @@ const CurrentTimeTable = () => {
     try {
       console.log('🧪 Starting background notification test...');
       
-      // Create test periods - one every minute for the next 3 minutes
-      // But set start time 10 minutes AFTER the target time so notification fires at the target time
+      // Creates 3 test periods - one every minute for the next 3 minutes
       const now = new Date();
       const testPeriods = [];
       
@@ -668,8 +667,6 @@ const CurrentTimeTable = () => {
           minute: '2-digit',
           hour12: true 
         });
-        
-        console.log(`🧪 Test ${i}: Notification should fire at ${targetNotificationTime.toLocaleTimeString()} (period "starts" at ${timeString})`);
         
         testPeriods.push({
           period: `TEST-${i}`,
@@ -684,32 +681,20 @@ const CurrentTimeTable = () => {
         });
       }
 
-      // Send test periods to server for scheduling
+      // Send test periods to server
       const response = await fetch(getApiUrl('scheduleNotifications'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           periods: testPeriods,
           userId: userData.uid,
-          selectedOptions: { 0: 0, 1: 0, 2: 0 } // Select first option for all
+          selectedOptions: { 0: 0, 1: 0, 2: 0 }
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to schedule test notifications');
-      }
-      
+      // Shows success message
       const result = await response.json();
-      console.log('✅ Test notifications scheduled:', result.message);
-      
-      // Show user feedback
-      const currentTime = new Date();
-      const firstNotificationTime = new Date(currentTime.getTime() + 60 * 1000);
-      toast.success(`🧪 Test started! You'll get ${result.scheduled} "YAAAAAAYY" notifications starting at ${firstNotificationTime.toLocaleTimeString()}, then every minute. Close your browser to test background notifications!`, {
-        duration: 8000
-      });
+      toast.success(`�� Test started! You'll get ${result.scheduled} "YAAAAAAYY" notifications starting in 1 minute, then every minute. Close your browser to test background notifications!`);
       
     } catch (error) {
       console.error('❌ Error scheduling test notifications:', error);
