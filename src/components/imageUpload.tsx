@@ -83,6 +83,16 @@ export function ImageUploadDemo() {
 
       const data = await response.json();
       console.log("Timetable data received:", data);
+      
+      // Show success toast with processing details
+      if (data.processedData) {
+        toast.success("🎉 Timetable processed successfully!", {
+          description: `Extracted ${data.processedData.coursesCount} courses, ${data.processedData.daysCount} days, ${data.processedData.periodsCount} periods`,
+          duration: 4000
+        });
+      } else {
+        toast.success("✅ Timetable saved successfully!");
+      }
 
       // Verify the timetable data was properly uploaded to Firestore
       const timetableCollection = collection(db, "TimeTable");
