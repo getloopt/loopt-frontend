@@ -246,13 +246,13 @@ const CurrentTimeTable = () => {
   const { timetable, loading: timetableLoading, error } = useTimetable();
   const isOnline = useNetworkStatus();
   
-  // Pre-computed values - Force current day to be Friday for testing
+  // Pre-computed values - Use actual current day
   const actualTodayName = useMemo(() => 
     new Date().toLocaleDateString('en-US', { weekday: 'long' }), []
   );
   
-  const todayName = useMemo(() => 'Monday', []);
-  const [selectedDay, setSelectedDay] = useState<string>('Monday');
+  const todayName = useMemo(() => actualTodayName, [actualTodayName]);
+  const [selectedDay, setSelectedDay] = useState<string>(actualTodayName);
   const [periods, setPeriods] = useState<Period[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [progress, setProgress] = useState(0);
@@ -737,7 +737,7 @@ const CurrentTimeTable = () => {
   // Check for weekend offline scenario
   if (!isOnline && !timetable && (actualTodayName === 'Saturday' || actualTodayName === 'Sunday')) {
     return (
-      <div className="w-full max-w-5xl mx-auto p-4 text-center">
+      <div className="w-full max-w-5xl p-4 text-center translate-x-10 justify-center items-center">
         <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-6">
           <h2 className="text-2xl font-bold text-white mb-4">🌴 It's {actualTodayName}!</h2>
           <p className="text-white/80 text-lg mb-2">Enjoy your weekend!</p>

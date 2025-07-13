@@ -51,30 +51,30 @@ const DaySchedule: React.FC<DayScheduleProps> = ({ day }) => {
       return;
     };
 
-    if (timetable.day && timetable.PeriodandTimings) {
-      const dayData: Period[] = timetable.day[day] || [];
-      setRoomData(timetable.classRoom || '');
-      
-      const fullPeriods: Period[] = timetable.PeriodandTimings.map((pt: any) => {
-        const found = dayData.find((p: any) => p.period === pt.period);
-        if (found) return found;
+      if (timetable.day && timetable.PeriodandTimings) {
+        const dayData: Period[] = timetable.day[day] || [];
+        setRoomData(timetable.classRoom || '');
         
-        const [start, end] = (pt.timing as string).split(' - ');
-        return {
-          period: pt.period,
-          iscode: false,
-          startTime: start.trim(), 
-          endTime: end.trim(),
-          Activity: [],
-        } as Period;
-      });
+        const fullPeriods: Period[] = timetable.PeriodandTimings.map((pt: any) => {
+          const found = dayData.find((p: any) => p.period === pt.period);
+          if (found) return found;
+          
+          const [start, end] = (pt.timing as string).split(' - ');
+          return {
+            period: pt.period,
+            iscode: false,
+            startTime: start.trim(), 
+            endTime: end.trim(),
+            Activity: [],
+          } as Period;
+        });
 
-      setPeriods(fullPeriods);
-    } else {
-      console.error("Timetable data is incomplete.", timetable);
-      setPeriods([]);
-      setRoomData('');
-    }
+        setPeriods(fullPeriods);
+      } else {
+        console.error("Timetable data is incomplete.", timetable);
+        setPeriods([]);
+        setRoomData('');
+      }
   }, [day, user, timetable]); // Dependencies are now in one place
 
 

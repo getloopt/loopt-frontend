@@ -34,11 +34,12 @@ const MobileErrorFallback = ({ error }: { error: string }) => (
   </div>
 );
 
+
+
 // Safe mobile dashboard component
 const MobileDashboard = () => {
   const [error, setError] = useState('');
   const [debugInfo, setDebugInfo] = useState('');
-
   useEffect(() => {
     // Only run on client side
     if (typeof window === 'undefined') return;
@@ -70,6 +71,7 @@ const MobileDashboard = () => {
     return <MobileErrorFallback error={error} />;
   }
 
+
   try {
     return (
       <motion.div 
@@ -84,6 +86,7 @@ const MobileDashboard = () => {
       >
         <div className="w-full max-w-4xl space-y-4">
           <NotificationSettings />
+
           <CurrentTimeTable />
         </div>
         
@@ -171,6 +174,8 @@ export default function Dashboard() {
     }
   };
 
+  // Check for duplicate timetables
+
   // Only show loading on initial mount, not during route changes
   if (!mounted) {
     return (
@@ -249,6 +254,7 @@ export default function Dashboard() {
           >
             <div className="max-md:translate-x-17 lg:translate-x-30 xl:translate-x-50 space-y-4">
               <NotificationSettings />
+
               <CurrentTimeTable />
             </div>
           </motion.div>

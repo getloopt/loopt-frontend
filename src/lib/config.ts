@@ -7,7 +7,7 @@ const getApiBaseUrl = () => {
   // }
   
   // In development, use local API routes (default Next.js behavior)
-  return 'https://meetings-flux-races-jerusalem.trycloudflare.com';
+return 'https://wal-canberra-norm-separation.trycloudflare.com';
 };
 
 export const API_CONFIG = {

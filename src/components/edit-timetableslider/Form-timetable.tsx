@@ -31,6 +31,12 @@ const getCategoryColor = (category: string): string => {
             return 'border-blue-500/50';
         case 'PE':
             return 'border-green-500/50';
+        case 'BS':
+            return 'border-purple-500/50';
+        case 'EEC':
+            return 'border-orange-500/50';
+        case 'HS':
+            return 'border-pink-500/50';
         default:
             return 'border-gray-500/50';
     }
@@ -191,13 +197,26 @@ const FormTimetable = () => {
     };
 
     const handleDeleteCourse = (courseCode: string) => {
-        setNewCourses(prev => {
-            const updated = prev.filter(course => course.code !== courseCode);
-            saveCoursesToFirestore([...sampleCourses, ...updated]);
-            // Save to localStorage
-            localStorage.setItem(auth.currentUser?.uid!, JSON.stringify([...sampleCourses, ...updated]));
-            return updated;
-        });
+        // Check if the course is from sampleCourses or newCourses
+        const isFromSample = sampleCourses.some(course => course.code === courseCode);
+        
+        if (isFromSample) {
+            setSampleCourses(prev => {
+                const updated = prev.filter(course => course.code !== courseCode);
+                saveCoursesToFirestore([...updated, ...newCourses]);
+                // Save to localStorage
+                localStorage.setItem(auth.currentUser?.uid!, JSON.stringify([...updated, ...newCourses]));
+                return updated;
+            });
+        } else {
+            setNewCourses(prev => {
+                const updated = prev.filter(course => course.code !== courseCode);
+                saveCoursesToFirestore([...sampleCourses, ...updated]);
+                // Save to localStorage
+                localStorage.setItem(auth.currentUser?.uid!, JSON.stringify([...sampleCourses, ...updated]));
+                return updated;
+            });
+        }
     };
 
     // Update the combinedCourses calculation
@@ -209,10 +228,10 @@ const FormTimetable = () => {
         const timetableCol = collection(db, 'TimeTable');
         const q = query(
             timetableCol,
-            where('department', '==', userData.department),
-            where('year', '==', userData.year),
-            where('section', '==', userData.section),
-            where('semester', '==', userData.semester)
+            where('department_uploaded', '==', userData.department),
+            where('year_uploaded', '==', userData.year),
+            where('section_uploaded', '==', userData.section),
+            where('semester_uploaded', '==', userData.semester)
         );
         const snap = await getDocs(q);
         if (!snap.empty) return snap.docs[0].ref;
@@ -220,10 +239,10 @@ const FormTimetable = () => {
         const newRef = doc(timetableCol);
         await setDoc(newRef, { 
             email: user.email, 
-            department: userData.department,
-            year: userData.year,
-            section: userData.section,
-            semester: userData.semester,
+            department_uploaded: userData.department,
+            year_uploaded: userData.year,
+            section_uploaded: userData.section,
+            semester_uploaded: userData.semester,
             'course-code': [] 
         });
         return newRef;
@@ -305,18 +324,42 @@ const FormTimetable = () => {
                                                         <span className='numeric-input'>-</span>
                                                         <span >Program Core</span>
                                                     </div>) : 
+                                                formData.category === 'PE' ?
                                                     (<div className="flex items-center gap-1">
                                                         <span >PE</span>
                                                         <span className='numeric-input'>-</span>
                                                         <span>Program Elective</span>
+                                                    </div>) :
+                                                formData.category === 'BS' ?
+                                                    (<div className="flex items-center gap-1">
+                                                        <span >BS</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Basic Sciences</span>
+                                                    </div>) :
+                                                formData.category === 'EEC' ?
+                                                    (<div className="flex items-center gap-1">
+                                                        <span >EEC</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Engineering & Entrepreneurship Core</span>
+                                                    </div>) :
+                                                formData.category === 'HS' ?
+                                                    (<div className="flex items-center gap-1">
+                                                        <span >HS</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Humanities & Social Sciences</span>
+                                                    </div>) :
+                                                    (<div className="flex items-center gap-1">
+                                                        <span >PC</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Program Core</span>
                                                     </div>)
                                                 }
                                                 <ChevronDown className='w-5 h-5' />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[90vw] h-[40vh] sm:w-[40vw] bg-[#141415] border-1 border-white/10">
+                                        <DropdownMenuContent className="w-[90vw] h-[60vh] sm:w-[40vw] bg-[#141415] border-1 border-white/10 p-2">
                                             <DropdownMenuItem 
-                                                className="cursor-pointer sm:text-lg text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm" 
+                                                className="cursor-pointer sm:text-lg text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm p-3 mb-1" 
                                                 onClick={() => setFormData({ ...formData, category: 'PC' })}
                                             >
                                                 <div className="flex items-center gap-1">
@@ -326,13 +369,43 @@ const FormTimetable = () => {
                                                 </div>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem 
-                                                className="cursor-pointer sm:text-lg text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s"
+                                                className="cursor-pointer sm:text-lg text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s p-3 mb-1"
                                                 onClick={() => setFormData({ ...formData, category: 'PE' })}
                                             >
                                                 <div className="flex items-center gap-1">
                                                     <span>PE</span>
                                                     <span className='numeric-input'>-</span>
                                                     <span>Program Elective</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                className="cursor-pointer sm:text-lg text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s"
+                                                onClick={() => setFormData({ ...formData, category: 'BS' })}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <span>BS</span>
+                                                    <span className='numeric-input'>-</span>
+                                                    <span>Basic Sciences</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                className="cursor-pointer sm:text-lg text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s"
+                                                onClick={() => setFormData({ ...formData, category: 'EEC' })}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <span>EEC</span>
+                                                    <span className='numeric-input'>-</span>
+                                                    <span>Engineering & Entrepreneurship Core</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                className="cursor-pointer sm:text-lg text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s"
+                                                onClick={() => setFormData({ ...formData, category: 'HS' })}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <span>HS</span>
+                                                    <span className='numeric-input'>-</span>
+                                                    <span>Humanities & Social Sciences</span>
                                                 </div>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -420,18 +493,42 @@ const FormTimetable = () => {
                                                         <span className='numeric-input'>-</span>
                                                         <span>Program Core</span>
                                                     </div>) : 
+                                                editingCourse?.category === 'PE' ?
                                                     (<div className="flex items-center gap-1">
                                                         <span>PE</span>
                                                         <span className='numeric-input'>-</span>
                                                         <span>Program Elective</span>
+                                                    </div>) :
+                                                editingCourse?.category === 'BS' ?
+                                                    (<div className="flex items-center gap-1">
+                                                        <span>BS</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Basic Sciences</span>
+                                                    </div>) :
+                                                editingCourse?.category === 'EEC' ?
+                                                    (<div className="flex items-center gap-1">
+                                                        <span>EEC</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Engineering & Entrepreneurship Core</span>
+                                                    </div>) :
+                                                editingCourse?.category === 'HS' ?
+                                                    (<div className="flex items-center gap-1">
+                                                        <span>HS</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Humanities & Social Sciences</span>
+                                                    </div>) :
+                                                    (<div className="flex items-center gap-1">
+                                                        <span>PC</span>
+                                                        <span className='numeric-input'>-</span>
+                                                        <span>Program Core</span>
                                                     </div>)
                                                 }
                                                 <ChevronDown className='w-5 h-5' />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-[90vw] h-[15vh] sm:w-[30vw] sm:h-[15vh] bg-[#141415] border-1 border-white/10">
+                                        <DropdownMenuContent className="w-[90vw] h-[60vh] sm:w-[30vw] bg-[#141415] border-1 border-white/10 p-2">
                                             <DropdownMenuItem 
-                                                className="cursor-pointer text-lg sm:text-sm text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm p-4"
+                                                className="cursor-pointer text-lg sm:text-sm text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-sm p-3 mb-1"
                                                 onClick={() => setEditingCourse(prev => prev ? {...prev, category: 'PC'} : null)}
                                             >
                                                 <div className="flex items-center gap-1">
@@ -441,13 +538,43 @@ const FormTimetable = () => {
                                                 </div>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem 
-                                                    className="cursor-pointer text-lg sm:text-sm text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s p-4"
+                                                className="cursor-pointer text-lg sm:text-sm text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s p-3 mb-1"
                                                 onClick={() => setEditingCourse(prev => prev ? {...prev, category: 'PE'} : null)}
                                             >
                                                 <div className="flex items-center gap-1">
                                                     <span>PE</span>
                                                     <span className='numeric-input'>-</span>
                                                     <span>Program Elective</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                className="cursor-pointer text-lg sm:text-sm text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s p-3 mb-1"
+                                                onClick={() => setEditingCourse(prev => prev ? {...prev, category: 'BS'} : null)}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <span>BS</span>
+                                                    <span className='numeric-input'>-</span>
+                                                    <span>Basic Sciences</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                className="cursor-pointer text-lg sm:text-sm text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s p-3 mb-1"
+                                                onClick={() => setEditingCourse(prev => prev ? {...prev, category: 'EEC'} : null)}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <span>EEC</span>
+                                                    <span className='numeric-input'>-</span>
+                                                    <span>Engineering & Entrepreneurship Core</span>
+                                                </div>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                className="cursor-pointer text-lg sm:text-sm text-white hover:bg-white/15 focus:text-white focus:bg-white/15 rounded-s p-3 mb-1"
+                                                onClick={() => setEditingCourse(prev => prev ? {...prev, category: 'HS'} : null)}
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    <span>HS</span>
+                                                    <span className='numeric-input'>-</span>
+                                                    <span>Humanities & Social Sciences</span>
                                                 </div>
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -541,7 +668,14 @@ const FormTimetable = () => {
                                                 </div>
                                                 <div><strong>Faculty Initials:</strong> {course.facultyInitials}</div>
                                                 <div><strong>Credits:</strong> {course.credits}</div>
-                                                <div><strong>Category:</strong> {course.category === 'PC' ? 'Program Core' : 'Program Elective'}</div>
+                                                <div><strong>Category:</strong> {
+                                                    course.category === 'PC' ? 'Program Core' : 
+                                                    course.category === 'PE' ? 'Program Elective' :
+                                                    course.category === 'BS' ? 'Basic Sciences' :
+                                                    course.category === 'EEC' ? 'Engineering & Entrepreneurship Core' :
+                                                    course.category === 'HS' ? 'Humanities & Social Sciences' :
+                                                    course.category
+                                                }</div>
                                             </div>
                                             <button className="mt-3 w-full button-normal text-white flex items-center justify-center gap-2 transition-colors" onClick={(e) => { e.stopPropagation(); handleCourseEdit(course.code, course); }}>
                                                 <Edit2 className="w-4 h-4" />
