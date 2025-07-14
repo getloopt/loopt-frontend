@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/ui/dropdown-menu"
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { Textarea } from '@/components/ui/ui/textarea'
 
 const AboutPage = () => {
   const { user, userData, loading, isAuthenticated, logout, refreshUserData } = useAuth();
@@ -265,6 +266,50 @@ const AboutPage = () => {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
+            {/* 
+              User Preferences Section
+              We'll add a new section similar to the "Profile settings" in the image you provided.
+              This section will be for "Push Notifications Customisation".
+            */}
+            <div className="mt-8 p-4 border border-white/20 rounded-lg">
+              <h2 className="text-stone-400 font-proxima-nova font-bold text-lg mb-4 border-b border-white/20 pb-2">
+                User Preferences
+              </h2>
+              {/* Push Notifications Customisation */}
+              <div className="mb-4">
+                <p className="text-white/80 font-proxima-nova text-sm mb-2">
+                Write custom notification prompts using <span className="font-mono px-1 rounded text-green-500">{'{faculty}'}</span>and <span className="font-mono px-1 rounded text-green-500">{'{subject}'}</span>placeholders wherever required.
+                </p>
+                {/* Textarea for custom notification prompt */}
+                <Textarea
+                  className="w-full bg-zinc-800 text-white border-white/20 border-1 rounded-md p-3 font-proxima-nova focus:ring-2 focus:ring-indigo-500 placeholder:text-white/60"
+                  rows={3}
+                  placeholder="{faculty} {subject} - This period is in 10mins - Give me a notification text liner that's in the format of Subject upcoming: arrival_content- arrival_content is a funnier way of stating the faculty's arrival. Do not include the subject in arrival content in any way, just the faculty. No offensive language but you can light heartedly roast
+                  Examples of funny arrival content:
+Dr. Anderson spawns in 10 minutes
+
+Dr. Anderson ETA : 10 mins
+
+Aura nuke alert Dr. Anderson entering the class
+
+Prof. Alexa is currently buffering—full download in 10 mins.
+
+Examples of not so funny arrival content:
+
+Prof. Alexa's warp drive is charging—landing in 10 mins
+
+Prof. Alexa's coffee-to-brain sync is at 90%—booting into class in 10 mins
+
+Prof. Alexa's reality loading bar is at 85%—materializing in 10 mins
+
+Again No offensive language on the faculty
+
+Expected output format: Data Structures upcoming: [your creative arrival announcement]"
+                  defaultValue={localData?.notificationPrompt || ""}
+                  onBlur={(e) => setLocalData({ ...localData, notificationPrompt: e.target.value })}
+                />
+              </div>
             </div>
             <Button className="inline-flex items-center justify-center whitespace-nowrap rounded-md sm:hover:cursor-pointer text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground hover:bg-primary/90 hover:cursor-pointer h-10 px-4 py-2 w-[50%] translate-x-1/2 z-20 mt-2 bg-[#32317f] border-white/20 border-1 font-proxima-nova" onClick={updateUser}>
               Save Changes
