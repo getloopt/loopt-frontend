@@ -177,6 +177,34 @@ self.addEventListener('push', async (event) => {
   }
 })
 
+// Handle messages from the client (for testing)
+self.addEventListener('message', (event) => {
+  console.log('📨 [SW] Message received:', event.data);
+  
+  if (event.data.type === 'SIMULATE_PUSH') {
+    // Simulate a push event
+    const { title, message, icon } = event.data.payload;
+    
+    self.registration.showNotification(title || 'Test Notification', {
+      body: message || 'This is a test notification',
+      icon: icon || '/images/icon512_rounded.png',
+      badge: '/images/icon512_rounded.png',
+      vibrate: [200, 100, 200],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: 1
+      }
+    }).then(() => {
+      console.log('✅ [SW] Test notification shown');
+      // Send response back to client
+      event.ports[0]?.postMessage({ success: true });
+    }).catch(err => {
+      console.error('❌ [SW] Error showing test notification:', err);
+      event.ports[0]?.postMessage({ success: false, error: err.message });
+    });
+  }
+});
+
 self.addEventListener('notificationclick', (event) => {
   console.log('👆 [SW] Notification clicked:', event.action);
   event.notification.close();

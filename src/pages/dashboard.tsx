@@ -5,6 +5,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import CurrentTimeTable from '@/components/correct-timetable/CurrentTimeTable';
 import { NotificationSettings } from '@/components/ui/ui/notifications';
+
 import { toast } from 'sonner';
 import { getApiUrl } from '@/lib/config';
 
@@ -123,58 +124,6 @@ export default function Dashboard() {
     }
   }, [loading, isAuthenticated, router]);
 
-  // 🔥 UPDATED: Direct server action call
-  const sendTestNotification = async () => {
-    try {
-      const userId = user?.uid;
-      if (!userId) {
-        toast.error('No user ID found. Please make sure you are logged in.');
-        return;
-      }
-
-      console.log('🧪 TESTING: Sending test notification for user:', userId);
-      
-      if (typeof window !== 'undefined' && 'Notification' in window) {
-        const permission = Notification.permission;
-        if (permission !== 'granted') {
-          toast.warning('Please enable notifications first by clicking the bell icon!');
-          return;
-        }
-      }
-
-      // Call API route instead of server action directly
-      const response = await fetch(getApiUrl('sendNotification'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: 'Test button was clicked! Your notification system is working perfectly. 🎉',
-          userId: userId,
-          icon: '/images/icon512_rounded.png',
-          title: '🧪 Test Notification - Button Clicked!'
-        })
-      });
-      
-      if (response.ok) {
-        console.log('✅ Test notification sent successfully');
-        toast.success('Test notification sent!', {
-          description: 'Check your browser notifications',
-          duration: 3000
-        });
-      } else {
-        const errorData = await response.json();
-        console.error('❌ API call failed:', errorData);
-        toast.error(`Failed to send notification: ${errorData.message}`);
-      }
-      
-    } catch (error) {
-      console.error('❌ Error sending test notification:', error);
-      toast.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
-
-  // Check for duplicate timetables
 
   // Only show loading on initial mount, not during route changes
   if (!mounted) {
