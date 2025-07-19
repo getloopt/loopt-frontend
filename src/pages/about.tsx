@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef, useId } from 'react'
 import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import { auth, db } from '../../firebase-config'
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/ui/input'
 import { Button } from '@/components/ui/ui/button'
 import { ChevronDown, AlertCircle } from "lucide-react";
 import { useNetworkStatus } from '@/hooks/use-network-status'
+
 
 import {
   AlertDialog,
@@ -30,14 +31,28 @@ import {
 } from "@/components/ui/ui/dropdown-menu"
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { Textarea } from '@/components/ui/ui/textarea'
+import { PromptEditor } from '@/components/ui/prompt'
+import { getApiUrl } from '@/lib/config'// import { Textarea } from '@/components/ui/ui/textarea'
 
 const AboutPage = () => {
   const { user, userData, loading, isAuthenticated, logout, refreshUserData } = useAuth();
   const [localData, setLocalData] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
-  const  isOnline  = useNetworkStatus();  
+  const  isOnline  = useNetworkStatus();
+  // Custom prompt validation states
+  const [promptError, setPromptError] = useState<string>('');
+  const [promptValue, setPromptValue] = useState<string>('');
+  // The reason we include the HTML <textarea> element (or useRef<HTMLTextAreaElement>) is because
+  // sometimes we want to directly interact with the actual textarea in the DOM (the web page).
+  // For example, we might want to focus it, clear it, or read its value without waiting for React to update.
+  // useRef<HTMLTextAreaElement>(null) creates a reference that we can attach to our <textarea> element,
+  // so we can access it directly in our code if needed.
+  // In summary: We include the HTML textarea element tag (or its reference) to interact with the text area directly from our code.
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+
+
   const departments = [
     { value: "bme", label: "Biomedical Engineering" },
     { value: "che", label: "Chemical Engineering" },
@@ -60,6 +75,27 @@ const AboutPage = () => {
     { value: "7", label: "Semester 7" },
     { value: "8", label: "Semester 8" }
   ];
+
+  // Validate custom prompt - memoized to prevent recreating on every render
+  const validatePrompt = useCallback((prompt: string): string => {
+    if (!prompt.trim()) {
+      return ''; // Empty is allowed
+    }
+
+    const allowedPlaceholders = ['{faculty}', '{subject}'];
+    const placeholderRegex = /\{([^}]+)\}/g;
+    const foundPlaceholders = [...prompt.matchAll(placeholderRegex)];
+    
+    for (const match of foundPlaceholders) {
+      const fullPlaceholder = match[0];
+      if (!allowedPlaceholders.includes(fullPlaceholder)) {
+        return `Invalid placeholder: ${fullPlaceholder}. Only {faculty} and {subject} are allowed.`;
+      }
+    }
+    
+    return '';
+  }, []);
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -104,6 +140,68 @@ const AboutPage = () => {
       }
     }
   }, [userData, isOnline, auth.currentUser?.uid]);
+
+  // Initialize prompt value from localData
+  useEffect(() => {
+    if (localData?.notificationPrompt) {
+      setPromptValue(localData.notificationPrompt);
+    }
+  }, [localData]);
+
+
+
+  // Save custom prompt
+  const saveCustomPrompt = async (prompt: string) => {
+    if (!user?.uid || !isOnline) {
+      toast.error("You are offline. Please connect to the internet to save your custom prompt.");
+      return;
+    }
+    console.log("Prompt:", prompt);
+    if(prompt === "") {
+     console.log("Prompt is empty");
+     return;
+    }
+    const error = validatePrompt(prompt);
+    
+    console.log("Validation error:", error);
+
+    if (error) {
+      setPromptError(error);
+      toast.error(error);
+      return;
+    }
+
+    setPromptError("");
+
+    // Now do the POST request here, since the prompt is valid
+    try {
+      const response = await fetch( getApiUrl('customPushNotify'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.uid,
+          customPrompt: prompt.trim()
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Custom prompt saved successfully!");
+        setLocalData({...localData, notificationPrompt: prompt});
+      } else {
+        if (data.error === 'INVALID_PLACEHOLDER') {
+          setPromptError(data.message);
+        }
+        toast.error(data.message || "Failed to save custom prompt.");
+      }
+    } catch (error) {
+      console.error("Error saving custom prompt:", error);
+      toast.error("Failed to save custom prompt. Please try again.");
+    }
+  };
 
   const updateUser = async () => {
     if (!user?.email) return;
@@ -190,6 +288,10 @@ const AboutPage = () => {
     return romanMap[roman]?.toString() || roman;
   };
 
+  const errorClass = promptError
+    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+    : "border-white/20 focus:ring-indigo-500 focus:border-indigo-500";
+
   const AboutContent = () => (
     <section className="py-12 sm:xl:ml-60 sm:lg:ml-40 sm:md:ml-21 sm:md:mr-10 sm:ml-35">
       <div className="container">
@@ -267,19 +369,6 @@ const AboutPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            {/* 
-              User Preferences Section
-              We'll add a new section similar to the "Profile settings" in the image you provided.
-              This section will be for "Push Notifications Customisation".
-            */}
-            {/* 
-              User Preferences Section
-              We want to make this area bigger so the textarea has more space.
-              We'll do this by:
-                - Increasing the minHeight of the container (using min-h-[220px] for example)
-                - Making the textarea itself taller (using rows=7 and min-h-[120px])
-                - Removing the fixed h-10vh which was too small and not very flexible
-            */}
             <div className="mt-8 p-4 border border-white/20 rounded-lg min-h-[220px]">
               <h2 className="text-stone-400 font-proxima-nova font-bold text-lg mb-4 border-b border-white/20 pb-2">
                 User Preferences
@@ -289,40 +378,15 @@ const AboutPage = () => {
                 <p className="text-white/80 font-proxima-nova text-sm mb-2">
                   Write custom notification prompts using <span className="font-mono px-1 rounded text-green-500">{'{faculty}'}</span> and <span className="font-mono px-1 rounded text-green-500">{'{subject}'}</span> placeholders wherever required.
                 </p>
-                {/* Textarea for custom notification prompt */}
-                <Textarea
-                  className="w-full bg-zinc-800 text-white border-white/20 border-1 rounded-md p-3 font-proxima-nova focus:ring-2 focus:ring-indigo-500 placeholder:text-white/60 min-h-[120px]"
-                  rows={7} // This makes the textarea taller by default
-                  placeholder="{faculty} {subject} - This period is in 10mins - Give me a notification text liner that's in the format of Subject upcoming: arrival_content- arrival_content is a funnier way of stating the faculty's arrival. Do not include the subject in arrival content in any way, just the faculty. No offensive language but you can light heartedly roast
-Examples of funny arrival content:
-Dr. Anderson spawns in 10 minutes
-
-Dr. Anderson ETA : 10 mins
-
-Aura nuke alert Dr. Anderson entering the class
-
-Prof. Alexa is currently buffering—full download in 10 mins.
-
-Examples of not so funny arrival content:
-
-Prof. Alexa's warp drive is charging—landing in 10 mins
-
-Prof. Alexa's coffee-to-brain sync is at 90%—booting into class in 10 mins
-
-Prof. Alexa's reality loading bar is at 85%—materializing in 10 mins
-
-Again No offensive language on the faculty
-
-Expected output format: Data Structures upcoming: [your creative arrival announcement]"
-                  defaultValue={localData?.notificationPrompt || ""}
-                  onBlur={(e) => setLocalData({ ...localData, notificationPrompt: e.target.value })}
-                />
-                {/* 
-                  Explanation for beginners:
-                  - min-h-[220px] on the container makes the whole box taller, so it doesn't look cramped.
-                  - rows={7} and min-h-[120px] on the textarea make the input area much bigger, so it's easier to write and see your prompt.
-                  - You can adjust these numbers if you want it even bigger or smaller!
-                */}
+                <div >
+                  <PromptEditor
+                    initialPrompt={promptValue}
+                    onSave={saveCustomPrompt}
+                    error={promptError}
+                  />
+                </div>
+  
+              
               </div>
             </div>
             <Button className="inline-flex items-center justify-center whitespace-nowrap rounded-md sm:hover:cursor-pointer text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-primary-foreground hover:bg-primary/90 hover:cursor-pointer h-10 px-4 py-2 w-[50%] translate-x-1/2 z-20 mt-2 bg-[#32317f] border-white/20 border-1 font-proxima-nova" onClick={updateUser}>

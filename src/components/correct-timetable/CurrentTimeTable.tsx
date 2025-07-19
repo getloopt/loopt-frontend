@@ -841,7 +841,7 @@ const CurrentTimeTable = () => {
         {/* Period Cards */}
         <div className={cn("flex-1 space-y-4 pb-15 max-sm:-translate-x-4 w-[200%]", !isToday && "max-sm:translate-x-6")} ref={cardsContainerRef}>
           {selectedDay === 'Saturday' || selectedDay === 'Sunday' ? (
-            <div className="flex items-center justify-center">
+            <div className={cn("flex items-center justify-center", selectedDay === 'Sunday' ? 'max-sm:-translate-x-5' : 'max-sm:translate-x-3')}>
               <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-6 max-w-md">
                 <h2 className="text-2xl font-bold text-white mb-4 text-center">🌴 It's {selectedDay}!</h2>
                 <p className="text-white/80 text-lg mb-2 text-center">Enjoy your weekend!</p>

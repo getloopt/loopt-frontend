@@ -1,6 +1,6 @@
 // API Configuration for different environments
 const getApiBaseUrl = () => {
-  const url = process.env.NEXT_PUBLIC_URL|| 'http://localhost:3001';  
+  const url = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';  
 
 
   console.log('Using API URL:', url);
@@ -14,7 +14,9 @@ export const API_CONFIG = {
     sendNotification: '/api/send-notification',
     mistralBackend: '/api/mistralbackend',
     uploadUrl: '/api/upload-url',
-    manageSubscription: '/api/manage-subscription'
+    manageSubscription: '/api/manage-subscription',
+    customPushNotify: '/api/custom-push-notify'
+
   }
 };
 

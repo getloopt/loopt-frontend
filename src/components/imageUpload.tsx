@@ -60,7 +60,19 @@ export function ImageUploadDemo() {
         return;
     }
     try {
-      const response = await fetch(getApiUrl('mistralBackend'), {
+      const apiUrl = 'http://localhost:3001/api/mistralbackend'
+      console.log('🌐 Calling API at:', apiUrl);
+
+      console.log('📤 Request payload:', { 
+        imageUrl: publicUrl, 
+        email: email,
+        department: details.department,
+        year: details.year,
+        section: details.section,
+        semester: details.semester,
+      });
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,11 +146,25 @@ export function ImageUploadDemo() {
       router.push('/editTimetable');
 
     } catch (error) {
-      console.error("Error calling mistral backend:", error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-      toast.error("Error processing timetable", {
-        description: `${errorMessage}. Please check console for more details.`,
+      console.error("❌ Error calling mistral backend:", error);
+      console.error("🔍 Error details:", {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
       });
+      
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+      
+      // Check if it's a network error
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        toast.error("Network Error", {
+          description: "Cannot connect to backend server. Please check if the backend is running on port 3001.",
+        });
+      } else {
+        toast.error("Error processing timetable", {
+          description: `${errorMessage}. Please check console for more details.`,
+        });
+      }
     }
   }
 

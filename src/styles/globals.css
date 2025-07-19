@@ -95,6 +95,11 @@
   font-style: normal;
   font-display: swap;
 }
+.no-scroll-jump {
+  /* Disable the browser’s automatic scroll anchoring */
+  overflow-anchor: none;
+}
+
 
 @custom-variant dark (&:is(.dark *));
 
