@@ -9,6 +9,11 @@ import { Input } from '@/components/ui/ui/input'
 import { Button } from '@/components/ui/ui/button'
 import { ChevronDown, AlertCircle } from "lucide-react";
 import { useNetworkStatus } from '@/hooks/use-network-status'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 
 import {
@@ -148,6 +153,38 @@ const AboutPage = () => {
     }
   }, [localData]);
 
+  // Check for content policy violations
+  useEffect(() => {
+    const checkContentPolicyViolation = async () => {
+      if (!user?.uid || !isOnline) return;
+      
+      try {
+        const response = await fetch(`${getApiUrl('customPushNotify')}?userId=${user.uid}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.contentPolicyViolation) {
+            toast.error("Your custom prompt was reset due to content policy violations. Please try a different prompt.", {
+              duration: 6000,
+            });
+            // Clear the prompt value since it was reset
+            setPromptValue('');
+            setLocalData((prev: any) => ({ ...prev, notificationPrompt: '' }));
+          }
+        }
+      } catch (error) {
+        console.error("Error checking content policy violation:", error);
+      }
+    };
+
+    checkContentPolicyViolation();
+  }, [user?.uid, isOnline]);
+
 
 
   // Save custom prompt
@@ -173,6 +210,9 @@ const AboutPage = () => {
 
     setPromptError("");
 
+    // Show loading toast
+    const loadingToast = toast.loading("Testing your custom prompt...");
+
     // Now do the POST request here, since the prompt is valid
     try {
       const response = await fetch( getApiUrl('customPushNotify'), {
@@ -181,23 +221,49 @@ const AboutPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.uid,
+          userEmail: user.email,
           customPrompt: prompt.trim()
         })
       });
 
       const data = await response.json();
 
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
       if (response.ok) {
-        toast.success("Custom prompt saved successfully!");
+        // Success - prompt passed test and notification was sent
+        toast.success(data.message || "Custom prompt saved successfully! Check your notifications for a test message.", {
+          duration: 5000,
+        });
         setLocalData({...localData, notificationPrompt: prompt});
+        
+        // Show the generated test message if available
+  
+  
       } else {
+        // Handle different types of errors
         if (data.error === 'INVALID_PLACEHOLDER') {
           setPromptError(data.message);
+          toast.error(data.message);
+        } else if (data.error === 'CONTENT_POLICY_VIOLATION') {
+          setPromptError("Content policy violation detected. Please use a different prompt.");
+          toast.error("🚫 Content policy violation detected. Please use a different prompt.", {
+            duration: 6000,
+          });
+        } else if (data.error === 'TEST_FAILED') {
+          toast.error(data.message || "Failed to test prompt. Please try again.");
+        } else if (data.error === 'DAILY_LIMIT_EXCEEDED') {
+          toast.error(`🚫 ${data.message}`, {
+            duration: 8000,
+          });
+        } else {
+          toast.error(data.message || "Failed to save custom prompt.");
         }
-        toast.error(data.message || "Failed to save custom prompt.");
       }
     } catch (error) {
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
       console.error("Error saving custom prompt:", error);
       toast.error("Failed to save custom prompt. Please try again.");
     }
@@ -376,8 +442,58 @@ const AboutPage = () => {
               {/* Push Notifications Customisation */}
               <div className="mb-4 p-4">
                 <p className="text-white/80 font-proxima-nova text-sm mb-2">
-                  Write custom notification prompts using <span className="font-mono px-1 rounded text-green-500">{'{faculty}'}</span> and <span className="font-mono px-1 rounded text-green-500">{'{subject}'}</span> placeholders wherever required.
+                  Write custom notification prompts using <span className="font-mono px-1 rounded text-green-500">{'{faculty}'}</span> and <span className="font-mono px-1 rounded text-green-500">{'{subject}'}</span> placeholders wherever required,the prompt should be less than 500 characters.
                 </p>
+                
+                {/* Collapsible Example Prompt */}
+                <div className="mb-4">
+                  <Collapsible className="w-full">
+                    <div className="flex items-center justify-between gap-4">
+                      <h4 className="mt-2 text-sm font-semibold text-white font-proxima-nova mb-2">
+                        Show custom prompt example
+                      </h4>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-8 bg-zinc-800 border border-white/20 hover:bg-zinc-700">
+                          <ChevronDown className="h-4 w-4 text-white" />
+                          <span className="sr-only">Toggle</span>
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                    <CollapsibleContent className="mt-2">
+                      <div className="rounded-md border border-white/20 bg-zinc-800 px-4 py-3 font-mono text-sm text-white/90">
+                        <p className="mb-2 font-proxima-nova">Example prompt:</p>
+                        <p className="text-green-400 font-mono text-xs leading-relaxed">
+                          {`{faculty} {subject} - This period is in 10mins - Give me a notification text liner that's in the format of Subject upcoming: arrival_content- arrival_content is a funnier way of stating the faculty's arrival. Do not include the subject in arrival content in any way, just the faculty. No offensive language but you can light heartedly roast.`}
+                        </p>
+                        <div className="mt-3">
+                          <p className="text-yellow-400 font-proxima-nova text-xs mb-1">Examples of funny arrival content:</p>
+                          <ul className="text-white/70 font-mono text-xs space-y-1 ml-2">
+                            <li>• Dr. Anderson spawns in 10 minutes</li>
+                            <li>• Dr. Anderson ETA : 10 mins</li>
+                            <li>• Aura nuke alert Dr. Anderson entering the class</li>
+                            <li>• Prof. Alexa is currently buffering—full download in 10 mins</li>
+                          </ul>
+                        </div>
+                        <div className="mt-3">
+                          <p className="text-red-400 font-proxima-nova text-xs mb-1">Examples of not so funny arrival content:</p>
+                          <ul className="text-white/70 font-mono text-xs space-y-1 ml-2">
+                            <li>• Prof. Alexa's warp drive is charging—landing in 10 mins</li>
+                            <li>• Prof. Alexa's coffee-to-brain sync is at 90%—booting into class in 10 mins</li>
+                            <li>• Prof. Alexa's reality loading bar is at 85%—materializing in 10 mins</li>
+                          </ul>
+                        </div>
+                        <div className="mt-3 p-2 bg-zinc-700 rounded border border-white/10">
+                          <p className="text-blue-400 font-proxima-nova text-xs mb-1">Expected output format:</p>
+                          <p className="text-white/90 font-mono text-xs">Data Structures upcoming: [your creative arrival announcement]</p>
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+                
+                {/* Info box about testing and daily limits */}
+        
+                
                 <div >
                   <PromptEditor
                     initialPrompt={promptValue}

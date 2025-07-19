@@ -15,6 +15,7 @@ export interface UserData {
   CanUploadEdit?: boolean;
   hasVerified?: boolean;
   uid?: string;
+  customNotificationPrompt?: string;
 }
 
 interface AuthContextType {

@@ -11,6 +11,8 @@ import { useNetworkStatus } from '@/hooks/use-network-status';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getApiUrl } from '@/lib/config';
+import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { db } from '../../../firebase-config';
 
 // --- Type definitions ---
 interface Activity {

@@ -89,7 +89,36 @@ export const Contact2 = (props: Contact2Props) => {
       semester: semesterRoman,
       CanUploadEdit: false,
       hasVerified: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      // Here we're setting the default value for customNotificationPrompt.
+      // This is a long string that explains how to write a funny notification for when a faculty arrives.
+      // It's meant to help the user understand the format and style expected.
+      customNotificationPrompt: `{faculty} {subject} - This period is in 10mins - Give me a notification text liner that's in the format of Subject upcoming: arrival_content- arrival_content is a funnier way of stating the faculty's arrival. Do not include the subject in arrival content in any way, just the faculty. No offensive language but you can light heartedly roast. 
+
+Examples of funny arrival content:
+
+Dr. Anderson spawns in 10 minutes
+
+Dr. Anderson ETA : 10 mins
+
+Aura nuke alert Dr. Anderson entering the class
+
+Prof. Alexa is currently buffering—full download in 10 mins
+
+Examples of not so funny arrival content:
+
+Prof. Alexa's warp drive is charging—landing in 10 mins
+
+Prof. Alexa's coffee-to-brain sync is at 90%—booting into class in 10 mins
+
+Prof. Alexa's reality loading bar is at 85%—materializing in 10 mins
+
+Again No offensive language on the faculty
+
+Expected output format: Data Structures upcoming: [your creative arrival announcement]`,
+changesDidPerDay: 0,
+contentPolicyViolation: false,
+updatedAt: new Date().toISOString()
     };
 
     // ✅ STEP 1: Save to localStorage immediately
