@@ -3,8 +3,7 @@ const getApiBaseUrl = () => {
   const url = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';  
 
 
-  console.log('Using API URL:', url);
-  return url;
+  return url
 };
 
 export const API_CONFIG = {

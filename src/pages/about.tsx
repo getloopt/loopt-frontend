@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState, useCallback, useMemo, useRef, useId } from 'react'
 import { useRouter } from 'next/router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { auth, db } from '../../firebase-config'
 import { collection, deleteDoc, doc, getDocs, query, updateDoc, where } from 'firebase/firestore'
 import { Label } from '@/components/ui/ui/label'
@@ -9,11 +9,6 @@ import { Input } from '@/components/ui/ui/input'
 import { Button } from '@/components/ui/ui/button'
 import { ChevronDown, AlertCircle } from "lucide-react";
 import { useNetworkStatus } from '@/hooks/use-network-status'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 
 
 import {
@@ -48,6 +43,7 @@ const AboutPage = () => {
   // Custom prompt validation states
   const [promptError, setPromptError] = useState<string>('');
   const [promptValue, setPromptValue] = useState<string>('');
+  const [isCollapsibleOpen, setIsCollapsibleOpen] = useState<boolean>(false);
   // The reason we include the HTML <textarea> element (or useRef<HTMLTextAreaElement>) is because
   // sometimes we want to directly interact with the actual textarea in the DOM (the web page).
   // For example, we might want to focus it, clear it, or read its value without waiting for React to update.
@@ -153,13 +149,16 @@ const AboutPage = () => {
     }
   }, [localData]);
 
+
+
   // Check for content policy violations
   useEffect(() => {
     const checkContentPolicyViolation = async () => {
       if (!user?.uid || !isOnline) return;
+      console.log("URL", getApiUrl('customPushNotify'))
       
       try {
-        const response = await fetch(`${getApiUrl('customPushNotify')}?userId=${user.uid}`, {
+        const response = await fetch(`${getApiUrl('customPushNotify')}?userEmail=${user.email}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -215,7 +214,7 @@ const AboutPage = () => {
 
     // Now do the POST request here, since the prompt is valid
     try {
-      const response = await fetch( getApiUrl('customPushNotify'), {
+      const response = await fetch(getApiUrl('customPushNotify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -447,48 +446,67 @@ const AboutPage = () => {
                 
                 {/* Collapsible Example Prompt */}
                 <div className="mb-4">
-                  <Collapsible className="w-full">
+                  <div className="w-full">
                     <div className="flex items-center justify-between gap-4">
                       <h4 className="mt-2 text-sm font-semibold text-white font-proxima-nova mb-2">
                         Show custom prompt example
                       </h4>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8 bg-zinc-800 border border-white/20 hover:bg-zinc-700">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="size-8 bg-zinc-800 border border-white/20 hover:bg-zinc-700"
+                         onClick={() => setIsCollapsibleOpen(!isCollapsibleOpen)}
+                      >
+                        <motion.div
+                          animate={{ rotate: isCollapsibleOpen ? 180 : 0 }}
+                          transition={{ 
+                            type: "spring",
+                            stiffness: 200,
+                            damping: 25,
+                            mass: 0.5
+                          }}
+                        >
                           <ChevronDown className="h-4 w-4 text-white" />
-                          <span className="sr-only">Toggle</span>
-                        </Button>
-                      </CollapsibleTrigger>
+                        </motion.div>
+                        <span className="sr-only">Toggle</span>
+                      </Button>
                     </div>
-                    <CollapsibleContent className="mt-2">
-                      <div className="rounded-md border border-white/20 bg-zinc-800 px-4 py-3 font-mono text-sm text-white/90">
-                        <p className="mb-2 font-proxima-nova">Example prompt:</p>
-                        <p className="text-green-400 font-mono text-xs leading-relaxed">
-                          {`{faculty} {subject} - This period is in 10mins - Give me a notification text liner that's in the format of Subject upcoming: arrival_content- arrival_content is a funnier way of stating the faculty's arrival. Do not include the subject in arrival content in any way, just the faculty. No offensive language but you can light heartedly roast.`}
-                        </p>
-                        <div className="mt-3">
-                          <p className="text-yellow-400 font-proxima-nova text-xs mb-1">Examples of funny arrival content:</p>
-                          <ul className="text-white/70 font-mono text-xs space-y-1 ml-2">
-                            <li>• Dr. Anderson spawns in 10 minutes</li>
-                            <li>• Dr. Anderson ETA : 10 mins</li>
-                            <li>• Aura nuke alert Dr. Anderson entering the class</li>
-                            <li>• Prof. Alexa is currently buffering—full download in 10 mins</li>
-                          </ul>
-                        </div>
-                        <div className="mt-3">
-                          <p className="text-red-400 font-proxima-nova text-xs mb-1">Examples of not so funny arrival content:</p>
-                          <ul className="text-white/70 font-mono text-xs space-y-1 ml-2">
-                            <li>• Prof. Alexa's warp drive is charging—landing in 10 mins</li>
-                            <li>• Prof. Alexa's coffee-to-brain sync is at 90%—booting into class in 10 mins</li>
-                            <li>• Prof. Alexa's reality loading bar is at 85%—materializing in 10 mins</li>
-                          </ul>
-                        </div>
-                        <div className="mt-3 p-2 bg-zinc-700 rounded border border-white/10">
-                          <p className="text-blue-400 font-proxima-nova text-xs mb-1">Expected output format:</p>
-                          <p className="text-white/90 font-mono text-xs">Data Structures upcoming: [your creative arrival announcement]</p>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
+                                        {/* Enhanced Animation Container */}
+                    <AnimatePresence>
+                      {isCollapsibleOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ 
+                            height: {
+                              type: "spring",
+                              stiffness: 120,
+                              damping: 32,
+                              mass: 1.0
+                            },
+                            opacity: {
+                              duration: 0.5,
+                              delay: 0.05
+                            }
+                          }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-2">
+                            <div className="rounded-md border border-white/20 bg-zinc-800 px-4 py-3 font-mono text-sm text-white/90">
+                              <p className="mb-2 font-proxima-nova">Example prompt:</p>
+                              <p className="text-green-400 font-mono text-xs leading-relaxed">
+                                {`{faculty} {subject} - This period is in 10mins - Give me a notification text liner that's in the format of Subject upcoming: arrival_content- arrival_content is a funnier way of stating the faculty's arrival. Do not include the subject in arrival content in any way, just the faculty. No offensive language but you can light heartedly roast.`}
+                              </p>
+              
+                    
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                  
                 </div>
                 
                 {/* Info box about testing and daily limits */}

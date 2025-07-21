@@ -40,6 +40,7 @@ export function ImageUploadDemo() {
 
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false);
   const { user, logout, userData } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [publicImageUrl, setPublicImageUrl] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export function ImageUploadDemo() {
         toast.error("Error: User not logged in or user details are missing.");
         return;
     }
+    setIsProcessing(true); // <-- Start spinner
     try {
       const apiUrl = 'http://localhost:3001/api/mistralbackend'
       console.log('🌐 Calling API at:', apiUrl);
@@ -165,6 +167,8 @@ export function ImageUploadDemo() {
           description: `${errorMessage}. Please check console for more details.`,
         });
       }
+    } finally {
+      setIsProcessing(false); // <-- Stop spinner
     }
   }
 
@@ -418,6 +422,15 @@ export function ImageUploadDemo() {
           </Button>
         </div>
       )}
+      {isProcessing && (
+  <div className="flex justify-center items-center my-4">
+    <svg className="animate-spin h-8 w-8 text-blue-500" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+    </svg>
+    <span className="ml-2 text-white">Processing timetable, please wait...</span>
+  </div>
+)}
     </div>
     </div>
     </div>

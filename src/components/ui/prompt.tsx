@@ -22,143 +22,204 @@ export function PromptEditor({
     }
   }, [userData?.customNotificationPrompt])
 
-  // This function checks what placeholders the user is typing and gives feedback.
-  // It only checks for {faculty} and {subject} placeholders, not for anything else like [your creative arrival announcement].
-  // It also tries to auto-correct some common mistakes for beginners.
-  const placeholderValidation = useMemo(() => {
-    // The only valid placeholders are these, and they must be lowercase, no spaces, and use curly braces
-    const validPlaceholders = ['{faculty}', '{subject}'];
+  // This function validates placeholders in the text
+  // It only checks for {faculty} and {subject} placeholders, ignoring other brackets like [your creative arrival announcement]
+  function validatePlaceholders(text: string): {
+    valid: string[];
+    invalid: string[];
+  } {
+    // 1. Only these exact tokens are valid:
+    const allowed = ['{faculty}', '{subject}'];
 
-    // We'll use this to collect the results
-    const validation = {
-      valid: [] as string[],
-      invalid: [] as string[],
-      suggestions: [] as string[],
-      errors: [] as string[]
-    };
+    // Use Sets to avoid duplicates
+    const validSet = new Set<string>();
+    const invalidSet = new Set<string>();
 
-    // 1. Find all things that look like placeholders (anything inside any kind of brackets)
-    // We'll look for curly braces, but also check for other brackets and common mistakes
-    // This regex finds anything that starts with a bracket and ends with a bracket, including wrong ones
-    const anyBracketPattern = /(\{[^}]*\}|[\[\(][^\]\)]*[\]\)])/g;
-    const foundPlaceholders = value.match(anyBracketPattern) || [];
-
-    // 2. We'll also check for unclosed curly braces (e.g. "{faculty" or "{subject ")
-    // This regex finds a "{" that is not closed by a "}"
-    const unclosedCurlyPattern = /\{[^\}]*$/g;
-    const unclosedCurly = value.match(unclosedCurlyPattern) || [];
-
-    // 3. We used to check for wrong brackets like [faculty] or (subject), but now we skip this check
-    // because sometimes the user might use square brackets or other types of brackets for things
-    // that are NOT placeholders (for example, [your creative arrival announcement]).
-    // So, we do NOT check for wrong brackets here anymore.
-    // However, we DO check for wrong brackets if they contain "faculty" or "subject" keywords
-    // since those are likely meant to be placeholders
-
-    // 4. We'll check for spaces before the closing curly brace, and auto-correct them
-    // For example: "{faculty }" should become "{faculty}"
-    let autoCorrectedValue = value.replace(/\{(\w+)\s+\}/g, (match, p1) => `{${p1}}`);
-
-    // 5. Now, let's process each found placeholder
-    foundPlaceholders.forEach(placeholder => {
-      // Check if it contains faculty or subject keywords but uses wrong brackets
-      const inside = placeholder.replace(/^[\[\(]|[\]\)]$/g, '').trim().toLowerCase();
-      if ((inside === 'faculty' || inside === 'subject') && !placeholder.startsWith('{')) {
-        // If it contains faculty or subject but uses wrong brackets, mark as invalid
-        validation.invalid.push(placeholder);
-        validation.errors.push(
-          `Placeholder "${placeholder}" uses the wrong type of brackets. Use curly braces: { } only.`
-        );
-        // Suggest the curly-brace version
-        validation.suggestions.push(`{${inside}}`);
-        return;
+    // 2. Detect double‑brace patterns: "{{…}}", "{{…}", "{…}}"
+    const doubleCurly = text.match(/\{\{[^}]*\}\}|\{\{[^}]*\}|[^}]*\}\}/g) || [];
+    doubleCurly.forEach(tok => {
+      // Only invalidate those that mention faculty/subject
+      if (/faculty|subject/i.test(tok)) {
+        invalidSet.add(tok);
       }
-
-      // Only check for {faculty} and {subject} placeholders, ignore others like [your creative arrival announcement]
-      // Only process if it starts with '{'
-      if (!placeholder.startsWith('{')) {
-        // If it starts with [ or (, it's a wrong bracket but not for faculty/subject keywords
-        // So we ignore it (could be something like [your creative arrival announcement])
-        return;
-      }
-
-      // Remove spaces before the closing curly brace for checking
-      let cleaned = placeholder.replace(/\s+\}/, '}');
-
-      // Only check for {faculty} and {subject}
-      const cleanedName = cleaned.replace(/[{}]/g, '').trim().toLowerCase();
-      if (cleanedName !== 'faculty' && cleanedName !== 'subject') {
-        // Ignore anything that's not {faculty} or {subject}
-        return;
-      }
-
-      // Check for uppercase letters (should be all lowercase)
-      if (/[A-Z]/.test(cleaned)) {
-        validation.invalid.push(placeholder);
-        validation.errors.push(
-          `Placeholder "${placeholder}" has uppercase letters. Use only lowercase, like "{faculty}".`
-        );
-        // Suggest the lowercase version
-        validation.suggestions.push(cleaned.toLowerCase());
-        return;
-      }
-
-      // Check for extra spaces before the closing brace
-      if (/\s+\}/.test(placeholder)) {
-        validation.invalid.push(placeholder);
-        validation.errors.push(
-          `Placeholder "${placeholder}" has a space before the closing brace. It should be like "{faculty}".`
-        );
-        // Suggest the corrected version
-        validation.suggestions.push(cleaned);
-        return;
-      }
-
-      // Check for spelling mistakes (should be exactly "{faculty}" or "{subject}")
-      if (!validPlaceholders.includes(cleaned)) {
-        validation.invalid.push(placeholder);
-        validation.errors.push(
-          `Placeholder "${placeholder}" is not recognized. Use "{faculty}" or "{subject}".`
-        );
-        // Suggest the closest valid placeholder if possible
-        if (cleanedName.includes('faculty')) {
-          validation.suggestions.push('{faculty}');
-        } else if (cleanedName.includes('subject')) {
-          validation.suggestions.push('{subject}');
-        }
-        return;
-      }
-
-      // If it passes all checks, it's valid!
-      validation.valid.push(cleaned);
     });
 
-    // 6. Handle unclosed curly braces, but only if they look like {faculty or {subject
-    if (unclosedCurly.length > 0) {
-      unclosedCurly.forEach(bad => {
-        const cleanedName = bad.replace(/[{}]/g, '').trim().toLowerCase();
-        if (cleanedName === 'faculty' || cleanedName === 'subject') {
-          validation.invalid.push(bad);
-          validation.errors.push(
-            `Placeholder "${bad}" is missing a closing curly brace "}".`
-          );
-          // Suggest the closed version
-          validation.suggestions.push(bad + '}');
+    // 3. Now capture *single* curly tokens that are NOT part of the double‑brace
+    //    Negative lookbehind (?<!\{) ensures we don't pick the inner "{faculty}" in "{{faculty}}"
+    //    Negative lookahead  (?!\}) ensures we don't pick it before the ending "}}"
+    const curlyTokens = text.match(/(?<!\{)\{[^}]*\}(?!\})/g) || [];
+
+    // 4. Mismatched‑bracket tokens like "{faculty)" or "(subject}"
+    const mismatchTokens = text.match(/(\{[^)]*\)|\([^}]*\})/g) || [];
+
+    // 5. Other brackets […] or (…) that might mention faculty/subject
+    const otherTokens = text.match(/[\[\(][^\]\)]*[\]\)]/g) || [];
+
+    // 6. Empty brackets like {}, [], or ()
+    const emptyBrackets = text.match(/\{\}|\[\]|\(\)/g) || [];
+
+    // 7. Check for mismatched start/end brackets - any bracket that starts with one type and ends with another
+    const mismatchedStartEnd = text.match(/([\[\(][^\]\)\}]*[\]\)\}]|\{[^\]\)\}]*[\]\)])/g) || [];
+    // This regex finds bracket patterns that have mismatched start/end
+    // For example: (sub}, [faculty), {subject] - but NOT {faculty} or {subject}
+
+    // 6. Process all single‑curly tokens
+    curlyTokens.forEach(token => {
+      // normalize inner text
+      const inner = token.slice(1, -1).trim().toLowerCase();
+
+      if (allowed.includes(token.toLowerCase())) {
+        // exactly "{faculty}" or "{subject}"
+        validSet.add(token);
+      }
+      else if (/faculty|subject/.test(inner)) {
+        // mentions faculty/subject but isn't exactly the allowed form
+        invalidSet.add(token);
+      }
+      // Check for common typos and abbreviations
+      else if (/^fac$|^faculty$|^f$|^facul$|^facult$/.test(inner)) {
+        // Common typos for faculty
+        invalidSet.add(token);
+      }
+      else if (/^subj$|^subject$|^s$|^sub$|^subje$|^subjec$/.test(inner)) {
+        // Common typos for subject
+        invalidSet.add(token);
+      }
+      // Check for more flexible faculty/subject variations
+      else if (/^fac.*$/.test(inner) && inner !== 'faculty') {
+        // Starts with 'fac' but isn't exactly 'faculty' (like 'fac', 'facc', 'facultyy', etc.)
+        invalidSet.add(token);
+      }
+      else if (/^sub.*$/.test(inner) && inner !== 'subject') {
+        // Starts with 'sub' but isn't exactly 'subject' (like 'sub', 'subb', 'subjeccc', etc.)
+        invalidSet.add(token);
+      }
+      // Check for single letter and two letter abbreviations
+      else if (/^s$/.test(inner)) {
+        // Single 's' - likely meant 'subject'
+        invalidSet.add(token);
+      }
+      else if (/^su$/.test(inner)) {
+        // 'su' - likely meant 'subject'
+        invalidSet.add(token);
+      }
+      else if (/^f$/.test(inner)) {
+        // Single 'f' - likely meant 'faculty'
+        invalidSet.add(token);
+      }
+      else if (/^fa$/.test(inner)) {
+        // 'fa' - likely meant 'faculty'
+        invalidSet.add(token);
+      }
+      // else: some other {foo} → ignore
+    });
+
+    // 7. Anything in mismatchTokens that mentions faculty/subject is invalid
+    mismatchTokens.forEach(token => {
+      if (/faculty|subject/i.test(token)) {
+        invalidSet.add(token);
+      }
+    });
+
+    // 8. Same for other bracket types
+    otherTokens.forEach(token => {
+      if (/faculty|subject/i.test(token)) {
+        invalidSet.add(token);
+      }
+    });
+
+    // 9. Handle empty brackets - these are always invalid
+    emptyBrackets.forEach(token => {
+      invalidSet.add(token);
+    });
+
+    // 10. Handle mismatched start/end brackets that contain faculty/subject
+    mismatchedStartEnd.forEach(token => {
+      const inner = token.slice(1, -1).trim().toLowerCase();
+      if (/faculty|subject/i.test(inner)) {
+        invalidSet.add(token);
+      }
+    });
+
+    return {
+      valid:   Array.from(validSet),
+      invalid: Array.from(invalidSet),
+    };
+  }
+
+  // Use the validation function to check the current value
+  const placeholderValidation = useMemo(() => {
+    const result = validatePlaceholders(value);
+    
+    // Add suggestions for common typos
+    const suggestions: string[] = [];
+    result.invalid.forEach(invalid => {
+      const inner = invalid.slice(1, -1).trim().toLowerCase();
+      
+      // Handle empty brackets
+      if (invalid === '{}' || invalid === '[]' || invalid === '()') {
+        suggestions.push('{faculty}', '{subject}');
+      }
+      // Handle mismatched brackets that contain faculty/subject keywords
+      else if (/faculty|subject/i.test(inner)) {
+        if (/faculty/i.test(inner)) {
+          suggestions.push('{faculty}');
         }
-      });
-    }
-
-    // 7. If we auto-corrected the value, update it (this is optional, but helps beginners)
-    if (autoCorrectedValue !== value) {
-      setTimeout(() => {
-        // Only update if the value hasn't changed since we started
-        if (autoCorrectedValue !== value) return;
-        // Uncomment the next line if you want auto-correction to happen live
-        // setValue(autoCorrectedValue);
-      }, 100);
-    }
-
-    return validation;
+        if (/subject/i.test(inner)) {
+          suggestions.push('{subject}');
+        }
+      }
+      // Handle mismatched start/end brackets specifically
+      else if (invalid.match(/^[\[\(][^\]\)]*[\]\)\}]$/) && /faculty|subject/i.test(inner)) {
+        // This is a mismatched start/end bracket containing faculty/subject
+        if (/faculty/i.test(inner)) {
+          suggestions.push('{faculty}');
+        }
+        if (/subject/i.test(inner)) {
+          suggestions.push('{subject}');
+        }
+      }
+      // Suggest corrections for faculty typos
+      else if (/^fac$|^faculty$|^f$|^facul$|^facult$/.test(inner)) {
+        suggestions.push('{faculty}');
+      }
+      // Suggest corrections for subject typos
+      else if (/^subj$|^subject$|^s$|^sub$|^subje$|^subjec$/.test(inner)) {
+        suggestions.push('{subject}');
+      }
+      // Suggest corrections for flexible faculty/subject variations
+      else if (/^fac.*$/.test(inner) && inner !== 'faculty') {
+        suggestions.push('{faculty}');
+      }
+      else if (/^sub.*$/.test(inner) && inner !== 'subject') {
+        suggestions.push('{subject}');
+      }
+      // Suggest corrections for single letter and two letter abbreviations
+      else if (/^s$/.test(inner)) {
+        suggestions.push('{subject}');
+      }
+      else if (/^su$/.test(inner)) {
+        suggestions.push('{subject}');
+      }
+      else if (/^f$/.test(inner)) {
+        suggestions.push('{faculty}');
+      }
+      else if (/^fa$/.test(inner)) {
+        suggestions.push('{faculty}');
+      }
+      // Suggest corrections for other faculty/subject variations
+      else if (/faculty/.test(inner)) {
+        suggestions.push('{faculty}');
+      }
+      else if (/subject/.test(inner)) {
+        suggestions.push('{subject}');
+      }
+    });
+    
+    return {
+      ...result,
+      suggestions: [...new Set(suggestions)] // Remove duplicates
+    };
   }, [value]);
 
   // Apply red border styling when there's an error
@@ -221,6 +282,18 @@ Expected output format: Data Structures upcoming: [your creative arrival announc
               {placeholderValidation.invalid.map((placeholder, index) => (
                 <span key={index} className="bg-red-500/20 text-red-300 px-2 py-1 rounded text-sm font-mono mr-2">
                   {placeholder}
+                </span>
+              ))}
+            </div>
+          )}
+          
+          {/* Show suggestions for corrections */}
+          {placeholderValidation.suggestions && placeholderValidation.suggestions.length > 0 && (
+            <div className="mb-2">
+              <span className="text-yellow-400 text-sm font-proxima-nova">💡 Did you mean: </span>
+              {placeholderValidation.suggestions.map((suggestion, index) => (
+                <span key={index} className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-sm font-mono mr-2">
+                  {suggestion}
                 </span>
               ))}
             </div>
