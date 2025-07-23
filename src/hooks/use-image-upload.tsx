@@ -36,7 +36,7 @@ export function useImageUpload({ onUpload }: UseImageUploadProps = {}) {
     }
     setPreviewUrl(null);
     setFileName(null);
-    setUploadedFile(null);
+    setUploadedFile(null); 
     previewRef.current = null;
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

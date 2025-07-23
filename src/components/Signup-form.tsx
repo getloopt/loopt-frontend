@@ -47,7 +47,7 @@ export function SignupForm() {
       }
 
       // Step 3: Check Email Domain - Exit early if not SSN
-      if (!user.email.endsWith("@cse.ssn.edu.in")) {
+      if (!user.email.endsWith("@cse.ssn.edu.in") && !user.email.endsWith("@ssn.edu.in")) {
         toast.error("Please use your SSN email to sign in", {
           description: "Only @cse.ssn.edu.in email addresses are allowed"
         });
