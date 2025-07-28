@@ -12,7 +12,7 @@ A Progressive Web App (PWA) for college students to manage their timetables and 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 18+grygryirg
 - npm or yarn
 - Firebase project setup
 
