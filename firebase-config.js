@@ -25,6 +25,8 @@ const db = getFirestore(app);
 // Enable Firestore offline persistence (this is automatic in v9+)
 // Firestore automatically enables offline persistence by default
 
+
+
 // Set auth persistence immediately
 setPersistence(auth, browserLocalPersistence)
   .then(() => {

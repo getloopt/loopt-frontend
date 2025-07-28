@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from "@/components/ui/ui/button"
 import {
   Card,
@@ -7,7 +7,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/ui/card"
-import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { Input } from "@/components/ui/ui/input"
+import { signInWithPopup, GoogleAuthProvider, signOut, sendSignInLinkToEmail } from "firebase/auth";
 import { auth, db } from '../../firebase-config'
 import { FirebaseError } from 'firebase/app';
 import { useRouter } from 'next/router';
@@ -15,6 +16,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { toast } from "sonner"
 import { useNetworkStatus } from '../hooks/use-network-status';
 import { WifiOff } from 'lucide-react';
+import { Label } from '@radix-ui/react-label';
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({
@@ -24,7 +26,7 @@ provider.setCustomParameters({
 export function SignupForm() {
   const router = useRouter();
   const isOnline = useNetworkStatus();
-  
+  const [email, setEmail] = useState("");
   const handleButtonClick = async () => {
     // Check if user is offline
     if (!isOnline) {
@@ -112,6 +114,44 @@ export function SignupForm() {
     }
   };
 
+  const handleEmailLinkClick = async () => {
+    // Check if user is offline
+    if (!isOnline) {
+      toast.error("📱 You're offline", {
+        description: "Please connect to the internet to sign in",
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Validate email format
+    if (!email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    // Check Email Domain - Only allow SSN emails
+    if (!email.endsWith("@cse.ssn.edu.in") && !email.endsWith("@ssn.edu.in")) {
+      toast.error("Please use your SSN email to sign in", {
+        description: "Only @cse.ssn.edu.in or @ssn.edu.in email addresses are allowed"
+      });
+      return;
+    }
+
+    const actionCodeSettings = {
+      // URL you want to redirect back to. The domain (www.example.com) for this
+      // URL must be in the authorized domains list in the Firebase Console.
+      url: window.location.origin + '/onboarding',
+      // This must be true.
+      handleCodeInApp: true 
+      
+    };
+
+    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+    window.localStorage.setItem('emailForSignIn', email);
+    toast.success("Email link sent to your email");
+
+  };
   return (
     <div>
       <Card className="sm:w-[50vw] w-[90vw] max-w-sm card-bg sm:p-8 pl-10 pr-10 border-none shadow-indigo-500 shadow-lg relative overflow-hidden">
@@ -141,6 +181,35 @@ export function SignupForm() {
               </>
             )}
           </Button>
+          <div className="grid w-full items-center gap-1.5 mt-4">
+            <Label htmlFor="email" className="text-muted-foreground font-proxima-nova font-medium text-sm"> If the sign in with Google doesn't work, try with email link</Label>
+            <Input type="text" placeholder="Enter your email" className='bg-zinc-800 p-6 text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80 placeholder:text-sm mt-2' 
+            onChange={(e) => setEmail(e.target.value)}
+            />
+            <Button
+            variant="outline"
+            className={`relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full mt-4 ${
+              isOnline 
+                ? 'bg-stone-300 text-stone-900 hover:cursor-pointer' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+            onClick={handleEmailLinkClick}
+            disabled={!isOnline}
+          >
+            {isOnline ? (
+              'Sign In with Email Link'
+            ) : (
+              <>
+                <WifiOff className="w-4 h-4 mr-2" />
+                Sign In with Email Link (Offline)
+              </>
+            )}
+          </Button>
+
+          </div>
+
+         
+
           {!isOnline && (
             <p className="text-sm text-gray-600 text-center mt-2">
               Connect to the internet to sign in

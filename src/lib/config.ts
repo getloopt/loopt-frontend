@@ -10,11 +10,11 @@ export const API_CONFIG = {
   baseURL: getApiBaseUrl(),
   
   endpoints: {
-    sendNotification: '/api/send-notification',
-    mistralBackend: '/api/mistralbackend',
-    uploadUrl: '/api/upload-url',
-    manageSubscription: '/api/manage-subscription',
-    customPushNotify: '/api/custom-push-notify'
+    sendNotification: 'api/send-notification',
+    mistralBackend: 'api/mistralbackend',
+    uploadUrl: 'api/upload-url',
+    manageSubscription: 'api/manage-subscription',
+    customPushNotify: 'api/custom-push-notify'
 
   }
 };
