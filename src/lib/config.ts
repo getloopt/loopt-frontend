@@ -2,6 +2,8 @@
 const getApiBaseUrl = () => {
   const url = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';  
 
+  console.log('🌐 API Base URL:', url);
+
 
   return url
 };

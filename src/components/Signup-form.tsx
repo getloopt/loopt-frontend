@@ -15,8 +15,9 @@ import { useRouter } from 'next/router';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { toast } from "sonner"
 import { useNetworkStatus } from '../hooks/use-network-status';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, ArrowLeft, Mail, RotateCcw, MailCheck } from 'lucide-react';
 import { Label } from '@radix-ui/react-label';
+import { motion, AnimatePresence } from "framer-motion"
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({
@@ -27,6 +28,8 @@ export function SignupForm() {
   const router = useRouter();
   const isOnline = useNetworkStatus();
   const [email, setEmail] = useState("");
+  const [showEmailSent, setShowEmailSent] = useState(false);
+
   const handleButtonClick = async () => {
     // Check if user is offline
     if (!isOnline) {
@@ -144,79 +147,175 @@ export function SignupForm() {
       url: window.location.origin + '/onboarding',
       // This must be true.
       handleCodeInApp: true 
-      
     };
 
-    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    window.localStorage.setItem('emailForSignIn', email);
-    toast.success("Email link sent to your email");
-
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
+      
+      // Show the email sent confirmation screen with animation
+      setShowEmailSent(true);
+      toast.success("Email link sent to your email");
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Failed to send email link", {
+        description: "Please try again"
+      });
+    }
   };
+
+  const handleGoBack = () => {
+    setShowEmailSent(false);
+  };
+
+  const handleResendEmail = async () => {
+    if (!email) return;
+    
+    const actionCodeSettings = {
+      url: window.location.origin + '/onboarding',
+      handleCodeInApp: true 
+    };
+
+    try {
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      toast.success("Email link resent!", {
+        description: "Please check your email inbox and spam folder"
+      });
+    } catch (error) {
+      console.error("Error resending email:", error);
+      toast.error("Failed to resend email link", {
+        description: "Please try again"
+      });
+    }
+  };
+
   return (
-    <div>
-      <Card className="sm:w-[50vw] w-[90vw] max-w-sm card-bg sm:p-8 pl-10 pr-10 border-none shadow-indigo-500 shadow-lg relative overflow-hidden">
-        <CardHeader className="flex flex-col gap-2">
-          <CardTitle className='text-card-text sm:text-xl'>Sign Up</CardTitle>
-          <CardDescription className='mt-2 sm:text-md'>
-            Get started with your SSN email to get started
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="flex-col gap-2">
-          <Button
-            variant="outline"
-            className={`relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full ${
-              isOnline 
-                ? 'bg-stone-300 text-stone-900 hover:cursor-pointer' 
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            }`}
-            onClick={handleButtonClick}
-            disabled={!isOnline}
+    <div className="relative overflow-hidden shadow-2xl shadow-indigo-500 drop-shadow-2xl">
+      <AnimatePresence mode="wait">
+        {!showEmailSent ? (
+          // Original Sign Up Form
+          <motion.div
+            key="signup-form"
+            initial={{ x: 0, opacity: 1 }}
+            exit={{ x: -100, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {isOnline ? (
-              'Sign Up with SSN Google Account'
-            ) : (
-              <>
-                <WifiOff className="w-4 h-4 mr-2" />
-                Sign In (Offline)
-              </>
-            )}
-          </Button>
-          <div className="grid w-full items-center gap-1.5 mt-4">
-            <Label htmlFor="email" className="text-muted-foreground font-proxima-nova font-medium text-sm"> If the sign in with Google doesn't work, try with email link</Label>
-            <Input type="text" placeholder="Enter your email" className='bg-zinc-800 p-6 text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80 placeholder:text-sm mt-2' 
-            onChange={(e) => setEmail(e.target.value)}
-            />
-            <Button
-            variant="outline"
-            className={`relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full mt-4 ${
-              isOnline 
-                ? 'bg-stone-300 text-stone-900 hover:cursor-pointer' 
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-            }`}
-            onClick={handleEmailLinkClick}
-            disabled={!isOnline}
+            <Card className="sm:w-[50vw] w-[90vw] max-w-sm card-bg sm:p-8 pl-10 pr-10 border-none shadow-2xl shadow-indigo-500 relative overflow-hidden">
+              <CardHeader className="flex flex-col gap-2 justify-center items-center">
+                <CardTitle className='text-card-text sm:text-xl text-center'>Sign Up</CardTitle>
+          
+              </CardHeader>
+              <CardFooter className="flex-col gap-2">
+                <Button
+                  variant="outline"
+                  className={`relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full ${
+                    isOnline 
+                      ? 'bg-stone-300 text-stone-900 hover:cursor-pointer' 
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
+                  onClick={handleButtonClick}
+                  disabled={!isOnline}
+                >
+                  {isOnline ? (
+                    'Sign Up with SSN Google Account'
+                  ) : (
+                    <>
+                      <WifiOff className="w-4 h-4 mr-2" />
+                      Sign In (Offline)
+                    </>
+                  )}
+                </Button>
+                <div className="grid w-full items-center gap-1.5 mt-2">
+                  <Label htmlFor="email" className="text-muted-foreground font-proxima-nova font-medium text-sm text-center"> OR </Label>
+                  <Input type="text" placeholder="Enter your email" className='bg-zinc-800 p-6 text-white border-none focus:ring-2 focus:ring-indigo-500 font-proxima-nova pl-7 placeholder:text-white/80 placeholder:text-sm mt-2' 
+                  onChange={(e) => setEmail(e.target.value)}
+                  value={email}
+                  />
+                  <Button
+                  variant="outline"
+                  className={`relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full mt-4 ${
+                    isOnline 
+                      ? 'bg-stone-300 text-stone-900 hover:cursor-pointer' 
+                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
+                  onClick={handleEmailLinkClick}
+                  disabled={!isOnline}
+                >
+                  {isOnline ? (
+                    <>
+                    <MailCheck className="w-4 h-4 mr-2" />
+                    Sign In with Email Link
+                    </>
+                  ) : (
+                    <>
+                      <WifiOff className="w-4 h-4 mr-2" />
+                      Sign In with Email Link (Offline)
+                    </>
+                  )}
+                </Button>
+                </div>
+
+                {!isOnline && (
+                  <p className="text-sm text-gray-600 text-center mt-2">
+                    Connect to the internet to sign in
+                  </p>
+                )}
+              </CardFooter>
+            </Card>
+          </motion.div>
+        ) : (
+          // Email Sent Confirmation Card
+          <motion.div
+            key="email-sent"
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 100, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            {isOnline ? (
-              'Sign In with Email Link'
-            ) : (
-              <>
-                <WifiOff className="w-4 h-4 mr-2" />
-                Sign In with Email Link (Offline)
-              </>
-            )}
-          </Button>
-
-          </div>
-
-         
-
-          {!isOnline && (
-            <p className="text-sm text-gray-600 text-center mt-2">
-              Connect to the internet to sign in
-            </p>
-          )}
-        </CardFooter>
-      </Card>
+            <Card className="sm:w-[50vw] w-[90vw] max-w-sm card-bg sm:p-8 pl-10 pr-10 border-none shadow-lg shadow-indigo-500/25 drop-shadow-2xl relative overflow-hidden">
+              <CardHeader className="flex flex-col gap-2">
+                {/* Back Button */}
+                <Button
+                  variant="ghost"
+                  className="w-fit pr-4 pl-4 pt-2 pb-2 mb-2 rounded-full text-gray-600 hover:cursor-pointer !hover:!bg-none "
+                  onClick={handleGoBack}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                
+                {/* Email Icon and Title */}
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-indigo-500" />
+                  </div>
+                  <CardTitle className='text-card-text sm:text-xl'>
+                    Please check your email!
+                  </CardTitle>
+                </div>
+                
+                <CardDescription className='mt-2 sm:text-md text-gray-600'>
+                  If there is an account associated with{' '} check your spam folder mainly!
+                  <span className="font-medium text-indigo-500">{email}</span>, you will receive an email
+                  with a link to sign in.
+                </CardDescription>
+              </CardHeader>
+              
+              <CardFooter className="flex-col gap-2">
+                {/* Resend Email Button */}
+                <Button
+                  variant="outline"
+                  className="relative lg:w-[20vw] md:w-[39vw] sm:p-5 p-2 w-full bg-stone-300 text-stone-900 hover:bg-stone-400 hover:cursor-pointer"
+                  onClick={handleResendEmail}
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Resend Email
+                </Button>
+              </CardFooter>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
