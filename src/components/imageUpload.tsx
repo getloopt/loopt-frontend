@@ -62,7 +62,7 @@ export function ImageUploadDemo() {
     }
     setIsProcessing(true); // <-- Start spinner
     try {
-      const apiUrl = 'http://localhost:3001/api/mistralbackend'
+      const apiUrl = getApiUrl('mistralBackend')
       console.log('🌐 Calling API at:', apiUrl);
 
       console.log('📤 Request payload:', { 
