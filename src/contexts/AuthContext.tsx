@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserData = async (email: string): Promise<UserData | null> => {
     // Don't fetch data for non-SSN emails
-    if (!email.endsWith("@cse.ssn.edu.in")) {
+    if (!email.endsWith("@cse.ssn.edu.in") && !email.endsWith("@ssn.edu.in")) {
       // Sign out non-SSN users
       try {
         await auth.signOut();

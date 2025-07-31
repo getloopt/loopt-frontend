@@ -27,7 +27,7 @@ export default function OnboardingPage() {
                 if (email) {
                     try {
                         await signInWithEmailLink(auth, email, window.location.href);
-                        window.localStorage.removeItem('emailForSignIn');
+                        // window.localStorage.removeItem('emailForSignIn');
                         router.replace('/onboarding', undefined, { shallow: true });
                     } catch (error) {
                         toast.error("Failed to sign in.", { description: "The link may be invalid or expired." });
