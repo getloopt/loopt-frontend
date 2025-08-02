@@ -246,7 +246,7 @@ export const NotificationSettings = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:-right-50 sm:-top-60 md:right-18 md:top-60 lg:-right-120 lg:-top-45">
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:-right-120 sm:-top-45">
       <button 
         className="rounded-full p-2 hover:bg-gray-100 transition-colors"
         onClick={() => {
