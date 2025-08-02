@@ -86,7 +86,7 @@ const MobileDashboard = () => {
         }}
       >
         <div className="w-full max-w-4xl space-y-4 ">
-          <NotificationSettings />
+
 
           <CurrentTimeTable />
         </div>
@@ -174,6 +174,8 @@ export default function Dashboard() {
   }
 
   return (
+    <>
+    <NotificationSettings />
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -191,6 +193,7 @@ export default function Dashboard() {
       {/* Desktop view */}
       <div className="hidden sm:block ml-4">
         <Layout>
+
           <motion.div 
             className="flex flex-col items-center justify-center min-h-screen p-4"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -202,7 +205,6 @@ export default function Dashboard() {
             }}
           >
             <div className="max-md:translate-x-17 lg:translate-x-30 xl:translate-x-50 space-y-4">
-              <NotificationSettings />
 
               <CurrentTimeTable />
             </div>
@@ -210,5 +212,6 @@ export default function Dashboard() {
         </Layout>
       </div>
     </motion.div>
+    </>
   );
 }
