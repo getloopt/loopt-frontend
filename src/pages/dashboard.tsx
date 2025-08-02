@@ -85,7 +85,7 @@ const MobileDashboard = () => {
           ease: "easeOut"
         }}
       >
-        <div className="w-full max-w-4xl space-y-4">
+        <div className="w-full max-w-4xl space-y-4 ">
           <NotificationSettings />
 
           <CurrentTimeTable />
@@ -137,7 +137,7 @@ export default function Dashboard() {
   // Show auth error if there's one
   if (authError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-500 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-500 flex items-center justify-center p-4 ">
         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
           <h2 className="text-xl font-bold text-red-600 mb-4">Authentication Error</h2>
           <p className="text-gray-700 mb-4">Failed to check authentication:</p>

@@ -246,8 +246,9 @@ export const NotificationSettings = () => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+    <div className="fixed top-4 right-4 z-50 flex items-center gap-2 sm:-right-50 sm:-top-60 md:right-18 md:top-60 lg:-right-120 lg:-top-45">
       <button 
+        className="rounded-full p-2 hover:bg-gray-100 transition-colors"
         onClick={() => {
           if (permission === 'granted') {
             // When notifications are already granted but we click the bell icon,
@@ -266,9 +267,8 @@ export const NotificationSettings = () => {
             );
           }
         }}
-        className="rounded-full p-2 hover:bg-gray-100 transition-colors"
       >
-        <BellIcon className={`h-6 w-6 ${permission === 'granted' ? 'text-blue-600' : 'text-gray-600'}`} />
+        <BellIcon className={`h-6 w-6 ${permission === 'granted' ? 'text-yellow-600' : 'text-gray-600'}`} />
       </button>
     </div>
   );

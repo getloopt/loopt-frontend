@@ -127,7 +127,7 @@ export function SignupForm() {
       return;
     }
 
-    // Validate email format
+    // Validate email format window.localStorage
     if (!email) {
       toast.error("Please enter your email address");
       return;
